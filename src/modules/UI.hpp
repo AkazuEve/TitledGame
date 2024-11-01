@@ -79,19 +79,21 @@ namespace UI {
 
 		if (currentBuffer) {
 			ImGui::Begin("Debug buffer view", nullptr, ImGuiWindowFlags_MenuBar);
-			ImGui::Image((ImTextureID)currentBuffer, ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+			ImGui::Image(reinterpret_cast<ImTextureID>(currentBuffer), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 			ImGui::End();
 		}
 
-		ImGui::Begin("Objects");
 
-		for (UIElement* element : UIElement::elements) {
-			element->OnUIRender();
+		if (UIElement::elements.size() > 1) {
+			ImGui::Begin("Objects");
+
+			for (UIElement* element : UIElement::elements) {
+				element->OnUIRender();
+			}
+
+			ImGui::End();
 		}
-
-		ImGui::End();
 	
-
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}

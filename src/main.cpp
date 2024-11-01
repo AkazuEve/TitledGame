@@ -18,30 +18,6 @@ std::vector<GLushort> indices = {
 	0, 3, 2 // Lower triangle
 };
 
-class Object: UIElement {
-public:
-	Object(const char* name) {
-		tris = new Mesh(vertices, indices, &rendered);
-		this->name = name;
-	}
-
-	~Object() {
-		delete(tris);
-	}
-
-	virtual void OnUIRender() {
-		ImGui::Text(name);
-		ImGui::Checkbox(name, &rendered);
-	}
-
-private:
-	bool rendered = true;
-	Mesh* tris;
-
-	const char* name;
-};
-
-
 int main() {
 	Window mainWindow(1440, 810, "Game Window");
 	RenderingInit();
@@ -51,7 +27,7 @@ int main() {
 	UI::gBufferNormal = GetRenderBufferNormalTexture();
 	UI::gBufferDepth = GetRenderBufferDepthTexture();
 
-	Object yeet("One");
+	Mesh mesh(vertices, indices);
 
 	while (mainWindow.ShouldRun()) {
 		Render();

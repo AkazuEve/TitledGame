@@ -42,7 +42,7 @@ private:
 class Mesh {
 public:
 	// Creates OpenGL buffers and moves data to GPU from existing vectors
-	Mesh(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, bool* enabled);
+	Mesh(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer);
 	Mesh(const Mesh&) = delete;
 
 	~Mesh();
