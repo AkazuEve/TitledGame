@@ -13,6 +13,7 @@ struct Vertex {
 	glm::vec3 nor;
 	glm::vec2 tex;
 };
+
 struct MeshData {
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
@@ -20,7 +21,7 @@ struct MeshData {
 
 #pragma endregion
 
-#pragma region ConstVars
+#pragma region Const Variables
 static std::vector<GLfloat> quadVertices ={
 //     COORDINATES     / Texture cordinates
 	-1.0f, -1.0f, 
@@ -34,6 +35,27 @@ static std::vector<GLushort> quadIndices = {
 	0, 2, 1, // Upper triangle
 	0, 3, 2 // Lower triangle
 };
+
+#pragma endregion
+
+#pragma region Variables
+
+// Store them as pointers cause they have to be created after initialization of OpenGL
+Shader* prePass = nullptr;
+Shader* firstPas = nullptr;
+
+// Default clear color
+glm::vec3 defaultClearColor = { 0.2f, 0.2f, 0.6f };
+
+// gBuffer stuff
+GLuint gBuffer{ 0 }, gColorTexture{ 0 }, gNormalTexture{ 0 }, gDepthTexture{ 0 };
+unsigned int renderWidth{ 1440 }, renderHeight{ 810 };
+
+// Shader uniforms shortcuts
+GLuint cameraUniform{ 0 }, modelUniform{ 0 };
+
+// Render quad stuff
+GLuint renderQuadVBO{ 0 }, renderQuadvBuffer{ 0 }, renderQuadiBuffer{ 0 };
 
 #pragma endregion
 
@@ -228,7 +250,7 @@ Model::Model() {
 Model::~Model() {
 	// Destroy all allocated textures
 	for (Texture* texture : m_textures) {
-		texture->~Texture();
+		delete(texture);
 	}
 
 	// Remove this pointer from models vector
@@ -238,7 +260,6 @@ Model::~Model() {
 		DEBUGPRINT("Removed Model from model list: " << this);
 	}
 }
-
 
 void Model::AddMesh(std::string name, const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat) {
 	this->name = name;
@@ -256,6 +277,19 @@ void Model::AddTexture(GLenum textureSlot, std::string textuprePath) {
 }
 
 void Model::BindModel() {
+	// Recalculate new matrix
+	m_modelMatrix = glm::mat4{ 1.0f };
+
+	m_modelMatrix = glm::translate(m_modelMatrix, position);
+
+	m_modelMatrix = glm::rotate(m_modelMatrix, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	m_modelMatrix = glm::rotate(m_modelMatrix, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	m_modelMatrix = glm::rotate(m_modelMatrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	m_modelMatrix = glm::scale(m_modelMatrix, scale);
+	// Send model matrix to shader
+	glUniformMatrix4fv(modelUniform, 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
+
 	// Bind mesh and all its textures
 	m_mesh.BindMesh();
 	for (Texture* texture : m_textures) {
@@ -265,19 +299,42 @@ void Model::BindModel() {
 
 #pragma endregion
 
-// Store them as pointers cause they have to be created after initialization of OpenGL
-Shader* prePass = nullptr;
-Shader* firstPas = nullptr;
+#pragma region Camera
 
-// Default clear color
-glm::vec3 defaultClearColor = { 0.2f, 0.2f, 0.6f };
- 
-// gBuffer stuff
-GLuint gBuffer{ 0 }, gColorTexture{ 0 }, gNormalTexture{ 0 }, gDepthTexture{ 0 };
-unsigned int renderWidth{ 1440 }, renderHeight{ 810 };
+std::vector<Camera*> Camera::m_cameras{};
 
-// Render quad stuff
-GLuint renderQuadVBO{ 0 }, renderQuadvBuffer{ 0 }, renderQuadiBuffer{ 0 };
+Camera::Camera(std::string name, bool enabled) {
+	this->name = name;
+	this->isUsed = enabled;
+	// Push this pointer to cameras vector
+	m_cameras.push_back(this);
+	DEBUGPRINT("Added " << name << " Camera to camera list: " << this);
+}
+
+Camera::~Camera() {
+	// Remove this pointer from cameras vector
+	std::vector<Camera*>::iterator position = std::find(m_cameras.begin(), m_cameras.end(), this);
+	if (position != m_cameras.end()) {
+		m_cameras.erase(position);
+		DEBUGPRINT("Removed Camera " << name << "from camera list: " << this);
+	}
+}
+
+void Camera::SendDataToShader() {
+	// Reset 
+	view = glm::mat4(1.0f);
+	projection = glm::mat4(1.0f);
+
+	// Calculate view and projection matrix
+	view = glm::translate(view, position);
+	projection = glm::perspective(glm::radians(fov), (float)(renderWidth / renderHeight), nearPlane, farPlane);
+
+	static glm::mat4 result{ 0.0f };
+	result = projection * view;
+	glUniformMatrix4fv(cameraUniform, 1, GL_FALSE, glm::value_ptr(result));
+}
+
+#pragma endregion
 
 void RenderingInit() {
 	// Load all OpenGL functions
@@ -355,6 +412,9 @@ void RenderingInit() {
 	prePass = new Shader("res/shaders/pre.vert", "res/shaders/pre.frag");
 	firstPas = new Shader("res/shaders/first.vert", "res/shaders/first.frag");
 
+	modelUniform = glGetUniformLocation(prePass->GetShaderObject(), "model");
+	cameraUniform = glGetUniformLocation(prePass->GetShaderObject(), "camera");
+
 	// Chack for debug flags from GLFW and enable debug in OpenGL if needed
 	GLint flags = 0;
 	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
@@ -398,12 +458,10 @@ void Render() {
 	{
 		// Bind the gBuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
 		// Clear color and depth buffer
 		glClearColor(defaultClearColor.r, defaultClearColor.g, defaultClearColor.b, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Set pre pass shader as active
-		prePass->BindShader();
 
 		// Set rendering resolution
 		glViewport(0, 0, renderWidth, renderHeight);
@@ -417,7 +475,16 @@ void Render() {
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 
+		// Set pre pass shader as active
+		prePass->BindShader();
+
 		// Render data form all instances of Model if enabled
+		for (Camera* camera : Camera::GetCamerasVector()) {
+			if (camera->isUsed) {
+				camera->SendDataToShader();
+			}
+		}
+
 		for (Model* model : Model::GetModelsVector()) {
 			if (model->isRendered) {
 				model->BindModel();
@@ -434,9 +501,6 @@ void Render() {
 		// Clear color and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Bind the first pass shader
-		firstPas->BindShader();
-
 		// Bind a whole screen square
 		glBindVertexArray(renderQuadVBO);
 
@@ -446,8 +510,11 @@ void Render() {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, gNormalTexture);
 
+		// Bind the first pass shader
+		firstPas->BindShader();
+
 		// Render the final image
-		glDrawElements(GL_TRIANGLES, quadIndices.size(), GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
 		// Unbind all gBuffer textures
 		glActiveTexture(GL_TEXTURE0);

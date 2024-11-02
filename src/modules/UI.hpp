@@ -103,12 +103,9 @@ namespace UI {
 			}
 		}
 
-		ImGui::Begin("Debug");
 		for (UIElement* element : UIElement::elements) {
 			element->OnUIRender();
 		}
-		ImGui::End();
-		
 	
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

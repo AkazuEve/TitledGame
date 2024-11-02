@@ -11,7 +11,12 @@
 
 // Glad for OpenGL functions
 #include "../../ext/source/glad/glad.h"
+
+// Glm for math
 #include "../../ext/source/glm/glm.hpp"
+#include "../../ext/source/glm/gtc/matrix_transform.hpp"
+#include "../../ext/source/glm/gtc/type_ptr.hpp"
+
 
 #include "../../ext/precompiled/include/GLFW/glfw3.h"
 
@@ -28,6 +33,9 @@ public:
 
 	// Sets the used shader to this one
 	void BindShader();
+
+	// Gets the underlying shader object
+	GLuint GetShaderObject() { return m_shaderProgram; }
 
 private:
 	void CompileShader(GLuint& shader, std::string& file, GLint shaderType);
@@ -101,11 +109,10 @@ public:
 
 	static std::vector<Model*>& GetModelsVector() { return m_models; }
 
-
 public:
 	glm::vec3 position{ 0.0f };
 	glm::vec3 rotation{ 0.0f };
-	glm::vec3 scale{ 0.0f };
+	glm::vec3 scale{ 1.0f };
 
 	bool isRendered = true;
 
@@ -118,6 +125,35 @@ private:
 	glm::mat4 m_modelMatrix{ 1.0 };
 
 	static std::vector<Model*> m_models;
+};
+
+class Camera {
+public:
+	// Create camera instance with name
+	Camera(std::string name, bool enabled);
+	~Camera();
+	Camera(const Camera&) = delete;
+	
+	// Sends the camera matrix to shader uniform
+	void SendDataToShader();
+
+	static std::vector<Camera*>& GetCamerasVector() { return m_cameras; }
+
+public:
+	glm::vec3 position{ 0.0f, -0.5f, -2.0f };
+	float fov{ 90.0f };
+	float nearPlane{ 0.01f };
+	float farPlane{ 100.0f };
+
+	std::string name{};
+
+	bool isUsed = false;
+
+private:
+	glm::mat4 view{ 1.0f };
+	glm::mat4 projection{ 1.0f };
+
+	static std::vector<Camera*> m_cameras;
 };
 
 // Initializes all rendering stuff including a basic shader and render buffer

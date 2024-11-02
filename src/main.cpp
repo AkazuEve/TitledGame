@@ -4,18 +4,25 @@
 #include "modules/Window.hpp"
 #include "modules/UI.hpp"
 
+#include <crtdbg.h>
+
 // Vertices coordinates
 std::vector<GLfloat> vertices = {
-	-0.5f, -0.5f, 0.0f,		0.0f, 0.0f, // Lower left corner
-	-0.5f,  0.5f, 0.0f,		0.0f, 1.0f, // Upper left corner
-	 0.5f,  0.5f, 0.0f,		1.0f, 1.0f, // Upper right corner
-	 0.5f, -0.5f, 0.0f,		1.0f, 0.0f  // Lower right corner
+	-0.5f, 0.0f,  0.5f,		0.0f, 0.0f,
+	-0.5f, 0.0f, -0.5f,		1.0f, 0.0f,
+	 0.5f, 0.0f, -0.5f,		0.0f, 0.0f,
+	 0.5f, 0.0f,  0.5f,		1.0f, 0.0f,
+	 0.0f, 0.8f,  0.0f,		0.5f, 1.0f
 };
 
 // Indices for vertices order
 std::vector<GLushort> indices = {
-	0, 2, 1, // Upper triangle
-	0, 3, 2 // Lower triangle
+	0, 1, 2,
+	0, 2, 3,
+	0, 1, 4,
+	1, 2, 4,
+	2, 3, 4,
+	3, 0, 4
 };
 
 class ModelManager : UIElement {
@@ -23,13 +30,16 @@ public:
 	ModelManager() {
 
 	}
+
 	~ModelManager() {
-		for (Model* Model : m_models) {
-			Model->~Model();
+		for (Model* model : m_models) {
+			delete(model);
 		}
 	}
 
-	void OnUIRender() {
+	void OnUIRender() override {
+		ImGui::Begin("Model Manager");
+
 		static char name[20]{"Cat"};
 		static char textureName[20]{"pop_cat"};
 		ImGui::InputText("Name", name, 20);
@@ -46,34 +56,99 @@ public:
 			tmpPtr->AddTexture(GL_TEXTURE0, texturepPath);
 		}
 
-		if (ImGui::TreeNode("Models")) {
-			unsigned int i = 0;
-			for (Model* model : m_models) {
-				if (ImGui::TreeNode(std::string(model->name + "##" + std::to_string(i)).c_str())) {
-					i++;
-					ImGui::Checkbox("Is Rendered", &model->isRendered);
-					ImGui::SliderFloat3("Position", (float*)&model->position, -100, 100);
-					ImGui::SliderFloat3("Rotation", (float*)&model->rotation, -100, 100);
-					ImGui::SliderFloat3("Scale", (float*)&model->scale, -100, 100);
+		if (m_models.size() > 0) {
+			if (ImGui::TreeNode("Models")) {
+				unsigned int i = 0;
+				for (Model* model : m_models) {
+					if (ImGui::TreeNode(std::string(model->name + "##" + std::to_string(i)).c_str())) {
+						i++;
+						ImGui::Checkbox("Is Rendered", &model->isRendered);
+						ImGui::DragFloat3("Position", (float*)&model->position, 0.05f, -10, 10);
+						ImGui::DragFloat3("Rotation", (float*)&model->rotation, 0.5f, -360, 360);
+						ImGui::DragFloat3("Scale", (float*)&model->scale, 0.05f, 0, 5);
 
-					if (ImGui::Button("Remove")) {
-						std::vector<Model*>::iterator position = std::find(m_models.begin(), m_models.end(), model);
-						if (position != m_models.end()) {
-							model->~Model();
+						if (ImGui::Button("Remove")) {
 							DEBUGPRINT("Removed Model from Object manager list: " << model);
+							delete(model);
 						}
+						ImGui::TreePop();
 					}
-					ImGui::TreePop();
 				}
+				ImGui::TreePop();
 			}
-			ImGui::TreePop();
 		}
+		ImGui::End();
 	}
 private:
 	std::vector<Model*>& m_models = Model::GetModelsVector();
 };
 
+class CameraManager : UIElement {
+public:
+	CameraManager() {
+		m_currentCamera = new Camera("Default", true);
+	}
+
+	~CameraManager() {
+		for (Camera* camera : m_cameras) {
+			delete(camera);
+		}
+	}
+
+	void OnUIRender() override {
+		ImGui::Begin("Camera Manager");
+
+		static char newCameraName[20]{"Not Default"};
+
+		ImGui::InputText("New Camera Name", newCameraName, 20);
+
+		if (ImGui::Button("Create new camera")) {
+			new Camera(newCameraName, false);
+		}
+
+		ImGui::Separator();
+
+		for (Camera* camera : m_cameras) {
+			if (ImGui::TreeNode(camera->name.c_str())) {
+				ImGui::DragFloat3("Position", (float*)&camera->position, 0.05f, -10, 10);
+				ImGui::DragFloat("Fov", (float*)&camera->fov, 0.01f, 20.0f, 180.0f);
+				ImGui::DragFloat("Near Plane", (float*)&camera->nearPlane, 0.01f, 0.01f, 100.0f);
+				ImGui::DragFloat("Far Plane", (float*)&camera->farPlane, 0.01f, 20.0f, 100.0f);
+				if (ImGui::Button("Use")) {
+					if (camera != m_currentCamera) {
+						m_currentCamera->isUsed = false;
+						m_currentCamera = camera;
+						camera->isUsed = true;
+					}
+				}
+
+				if (ImGui::Button("Delete")) {
+					if (m_currentCamera == camera) {
+						for (Camera* cameraSearch : m_cameras) {
+							if (cameraSearch != camera) {
+								cameraSearch->isUsed = true;
+								m_currentCamera = cameraSearch;
+							}
+						}
+					}
+					delete(camera);
+				}
+				ImGui::TreePop();
+			}
+		}
+		ImGui::End();
+	}
+
+private:
+	std::vector<Camera*>& m_cameras = Camera::GetCamerasVector();
+	Camera* m_currentCamera = nullptr;
+};
+
+// TODO: Move both managers to rendering and comment over everything
+
 int main() {
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
 	Window mainWindow(1440, 810, "Game Window");
 	RenderingInit();
 	UI::ImGuiInit("#version 460");
@@ -82,11 +157,8 @@ int main() {
 	UI::gBufferNormal = GetRenderBufferNormalTexture();
 	UI::gBufferDepth = GetRenderBufferDepthTexture();
 
-	ModelManager manager;
-
-	//Object cat("Popcat", "res/textures/pop_cat.png");
-	//Object brick("Brick", "res/textures/brick.png");
-	//Object planks("Planks", "res/textures/planks.png");
+	ModelManager modelmanager;
+	CameraManager cameraManager;
 
 	while (mainWindow.ShouldRun()) {
 		Render();
