@@ -27,9 +27,7 @@ public:
 	~Shader();
 
 	// Sets the used shader to this one
-	void Bind();
-
-	static Shader* currentShader;
+	void BindShader();
 
 private:
 	void CompileShader(GLuint& shader, std::string& file, GLint shaderType);
@@ -40,18 +38,20 @@ private:
 // Texture class
 class Texture {
 public:
+	// Creates OpenGL objects
 	Texture();
 	Texture(const Texture&) = delete;
 	~Texture();
 
+	// Sends the data to GPU and sets used texture slot
 	void LoadTextureData(std::string texturePath, GLenum textureSlot);
 
+	// Binds the texture
 	void BindTexture();
 
 private:
 	GLuint m_texture{ 0 };
 	GLenum m_textureSlot{ 0 };
-
 };
 
 // Mesh class
@@ -83,15 +83,14 @@ private:
 	bool* m_isEnabled{ nullptr };
 };
 
-// Model class contains mesh data and textures
-// After creation data gets rendered when calling Render()
+// Model class contains mesh data and textures. After creation data gets rendered when calling Render()
 class Model {
 public:
 	Model();
 	~Model();
 	Model(const Model&) = delete;
 
-	void AddMesh(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat);
+	void AddMesh(std::string name, const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat);
 
 	void AddTexture(GLenum textureSlot, std::string textuprePath);
 
@@ -109,6 +108,8 @@ public:
 	glm::vec3 scale{ 0.0f };
 
 	bool isRendered = true;
+
+	std::string name{};
 
 private:
 	Mesh m_mesh;

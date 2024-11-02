@@ -7,6 +7,17 @@
 static std::string LoadShaderFile(std::string file);
 void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam);
 void RenderedWindowResizeCallback(GLFWwindow* window, int width, int height);
+
+struct Vertex {
+	glm::vec3 pos;
+	glm::vec3 nor;
+	glm::vec2 tex;
+};
+struct MeshData {
+	std::vector<Vertex> vertices;
+	std::vector<GLuint> indices;
+};
+
 #pragma endregion
 
 #pragma region ConstVars
@@ -26,39 +37,28 @@ static std::vector<GLushort> quadIndices = {
 
 #pragma endregion
 
-struct Vertex {
-	glm::vec3 pos;
-	glm::vec3 nor;
-	glm::vec2 tex;
-};
-struct MeshData {
-	std::vector<Vertex> vertices;
-	std::vector<GLuint> indices;
-};
-
 #pragma region Shader
-
-Shader* Shader::currentShader = nullptr;
 
 Shader::Shader(std::string vertexFile, std::string fragmentFile) {
 	m_shaderProgram = glCreateProgram();
 
-	
+	// Create temporary shader objects
 	GLuint vertexShader, fragmentShader;
 
+	// Read and compile shader source code
 	CompileShader(vertexShader, vertexFile, GL_VERTEX_SHADER);
 	CompileShader(fragmentShader, fragmentFile, GL_FRAGMENT_SHADER);
 
+	// Attach shaders to program
 	glAttachShader(m_shaderProgram, vertexShader);
 	glAttachShader(m_shaderProgram, fragmentShader);
 
+	// Link program
 	glLinkProgram(m_shaderProgram);
 
+	// Delete temporary shader objects
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
-
-	glUseProgram(m_shaderProgram);
-	currentShader = this;
 
 	DEBUGPRINT("Created shader: " << m_shaderProgram);
 }
@@ -68,15 +68,16 @@ Shader::~Shader() {
 	glDeleteProgram(m_shaderProgram);
 }
 
-void Shader::Bind() {
+void Shader::BindShader() {
 	glUseProgram(m_shaderProgram);
-	currentShader = this;
 }
 
 void Shader::CompileShader(GLuint& shader, std::string& file, GLint shaderType) {
 
+	// Create shader object with passed in variable
 	shader = glCreateShader(shaderType);
 
+	// Read source from file and compile
 	std::string shaderSource;
 	const char* vertexSourceCharPtr;
 	shaderSource = LoadShaderFile(file);
@@ -84,6 +85,7 @@ void Shader::CompileShader(GLuint& shader, std::string& file, GLint shaderType) 
 	glShaderSource(shader, 1, &vertexSourceCharPtr, NULL);
 	glCompileShader(shader);
 
+	// Check if compiling shader has failed and print out errors in console
 	GLint status;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE) {
@@ -92,8 +94,8 @@ void Shader::CompileShader(GLuint& shader, std::string& file, GLint shaderType) 
 		GLchar* message = (GLchar*)malloc(length * sizeof(GLchar));
 		glGetShaderInfoLog(shader, length, &length, message);
 
-		std::cout << "Failed to compile " << (shaderType == GL_VERTEX_SHADER ? "vertex" : "fragment") << std::endl;
-		std::cout << message << std::endl;
+		DEBUGPRINT("Failed to compile " << (shaderType == GL_VERTEX_SHADER ? "vertex" : "fragment"));
+		DEBUGPRINT(message);
 
 		free(message);
 	}
@@ -103,7 +105,9 @@ void Shader::CompileShader(GLuint& shader, std::string& file, GLint shaderType) 
 #pragma region Texture
 
 Texture::Texture() {
+	// Generate texture object
 	glGenTextures(1, &m_texture);
+
 	// Assigns the texture to a Texture Unit
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 
@@ -130,22 +134,25 @@ void Texture::LoadTextureData(std::string texturePath, GLenum textureSlot) {
 	m_textureSlot = textureSlot;
 
 	int x, y, n;
-	// Flips the image so it appears right side up
+	// Flip horizontally so OpenGL images are not flipped
 	stbi_set_flip_vertically_on_load(true);
-	// Reads the image from a file and stores it in bytes
+
+	// Read data from file
 	unsigned char* bytes = stbi_load(texturePath.c_str(), &x, &y, &n, 0);
 
+	// Bind texture object
 	glActiveTexture(m_textureSlot);
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 
-	// Assigns the image to the OpenGL Texture object
+	// Send data to GPU
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
-	// Generates MipMaps
+	// Generate mipmaps
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	// Deletes the image data as it is already in the OpenGL Texture object
+	// Free memory cause were good peope
 	stbi_image_free(bytes);
 
+	// Bind texture 0 no funny happens
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -213,14 +220,18 @@ void Mesh::BindMesh() {
 std::vector<Model*> Model::m_models;
 
 Model::Model() {
+	// Push created model pointer to vector
 	m_models.push_back(this);
+	DEBUGPRINT("Created model: " << this);
 }
 
 Model::~Model() {
+	// Destroy all allocated textures
 	for (Texture* texture : m_textures) {
 		texture->~Texture();
 	}
 
+	// Remove this pointer from models vector
 	std::vector<Model*>::iterator position = std::find(m_models.begin(), m_models.end(), this);
 	if (position != m_models.end()) {
 		m_models.erase(position);
@@ -229,20 +240,24 @@ Model::~Model() {
 }
 
 
-void Model::AddMesh(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat) {
+void Model::AddMesh(std::string name, const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat) {
+	this->name = name;
 	m_mesh.LoadMeshData(vBuffer, iBuffer, indexFormat);
 }
 
 void Model::AddTexture(GLenum textureSlot, std::string textuprePath) {
+	// Create new texture
 	Texture* tmp = new Texture();
+
+	// Setup data and push to texture vector
 	tmp->LoadTextureData(textuprePath, textureSlot);
 	m_textures.push_back(tmp);
 
 }
 
 void Model::BindModel() {
+	// Bind mesh and all its textures
 	m_mesh.BindMesh();
-
 	for (Texture* texture : m_textures) {
 		texture->BindTexture();
 	}
@@ -268,11 +283,11 @@ void RenderingInit() {
 	// Load all OpenGL functions
 	gladLoadGL();
 
+	// Turns out depth buffer wont work when its not enabled :>
 	glEnable(GL_DEPTH_TEST);
 
+	// Setup resize callback so were always up to date with render resolution
 	glfwSetWindowSizeCallback(glfwGetCurrentContext(), RenderedWindowResizeCallback);
-
-	Model square;
 
 	// Create gBuffer for rendering
 	{
@@ -336,7 +351,7 @@ void RenderingInit() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
-	// Create the render pipeline shader
+	// Create the render pipeline shaders
 	prePass = new Shader("res/shaders/pre.vert", "res/shaders/pre.frag");
 	firstPas = new Shader("res/shaders/first.vert", "res/shaders/first.frag");
 
@@ -388,7 +403,7 @@ void Render() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Set pre pass shader as active
-		prePass->Bind();
+		prePass->BindShader();
 
 		// Set rendering resolution
 		glViewport(0, 0, renderWidth, renderHeight);
@@ -420,7 +435,7 @@ void Render() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Bind the first pass shader
-		firstPas->Bind();
+		firstPas->BindShader();
 
 		// Bind a whole screen square
 		glBindVertexArray(renderQuadVBO);

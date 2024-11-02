@@ -65,42 +65,48 @@ namespace UI {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		if (ImGui::BeginMainMenuBar())
 		{
-			if (ImGui::BeginMenu("Debug buffer view"))
+			if (ImGui::BeginMainMenuBar())
 			{
-				if (ImGui::Button("Color Buffer")) {
-					currentBuffer = gBufferColor;
-				}
-				if (ImGui::Button("Normal Buffer")) {
-					currentBuffer = gBufferNormal;
-				}
-				if (ImGui::Button("Depth Buffer")) {
-					currentBuffer = gBufferDepth;
-				}
-				if (ImGui::Button("None")) {
-					currentBuffer = 0;
+				if (ImGui::BeginMenu("File"))
+				{
+					if (ImGui::Button("Exit")) {
+						glfwSetWindowShouldClose(glfwGetCurrentContext(), true);
+					}
+					ImGui::EndMenu();
 				}
 
-				ImGui::EndMenu();
-			}
-			ImGui::EndMainMenuBar ();
-		}
+				if (ImGui::BeginMenu("Debug buffer view"))
+				{
+					if (ImGui::Button("Color Buffer")) {
+						currentBuffer = gBufferColor;
+					}
+					if (ImGui::Button("Normal Buffer")) {
+						currentBuffer = gBufferNormal;
+					}
+					if (ImGui::Button("Depth Buffer")) {
+						currentBuffer = gBufferDepth;
+					}
+					if (ImGui::Button("None")) {
+						currentBuffer = 0;
+					}
 
-		if (currentBuffer) {
-			ImGui::Begin("Debug buffer view", nullptr, ImGuiWindowFlags_MenuBar);
-			ImGui::Image(reinterpret_cast<ImTextureID>(currentBuffer), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
-			ImGui::End();
-		}
-
-
-
-		ImGui::Begin("Models");
-
-			for (UIElement* element : UIElement::elements) {
-				element->OnUIRender();
+					ImGui::EndMenu();
+				}
+				ImGui::EndMainMenuBar();
 			}
 
+			if (currentBuffer) {
+				ImGui::Begin("Debug buffer view", nullptr);
+				ImGui::Image(reinterpret_cast<ImTextureID>(currentBuffer), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+				ImGui::End();
+			}
+		}
+
+		ImGui::Begin("Debug");
+		for (UIElement* element : UIElement::elements) {
+			element->OnUIRender();
+		}
 		ImGui::End();
 		
 	
