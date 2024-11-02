@@ -23,6 +23,7 @@ static std::vector<GLushort> quadIndices = {
 	0, 2, 1, // Upper triangle
 	0, 3, 2 // Lower triangle
 };
+
 #pragma endregion
 
 struct Vertex {
@@ -59,11 +60,11 @@ Shader::Shader(std::string vertexFile, std::string fragmentFile) {
 	glUseProgram(m_shaderProgram);
 	currentShader = this;
 
-	DEBUGPRINT("Created shader");
+	DEBUGPRINT("Created shader: " << m_shaderProgram);
 }
 
 Shader::~Shader() {
-	DEBUGPRINT("Destroyed shader");
+	DEBUGPRINT("Destroyed shader: " << m_shaderProgram);
 	glDeleteProgram(m_shaderProgram);
 }
 
@@ -101,125 +102,157 @@ void Shader::CompileShader(GLuint& shader, std::string& file, GLint shaderType) 
 
 #pragma region Texture
 
-class Texture {
-public:
-	Texture(GLenum slot) {
-		glGenTextures(1, &m_texture);
-		// Assigns the texture to a Texture Unit
-		glActiveTexture(slot);
-		glBindTexture(GL_TEXTURE_2D, m_texture);
+Texture::Texture() {
+	glGenTextures(1, &m_texture);
+	// Assigns the texture to a Texture Unit
+	glBindTexture(GL_TEXTURE_2D, m_texture);
 
-		// Configures the type of algorithm that is used to make the image smaller or bigger
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// Configures the type of algorithm that is used to make the image smaller or bigger
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-		// Configures the way the texture repeats (if it does at all)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// Configures the way the texture repeats (if it does at all)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-		int x, y, n;
-		// Flips the image so it appears right side up
-		stbi_set_flip_vertically_on_load(true);
-		// Reads the image from a file and stores it in bytes
-		unsigned char* bytes = stbi_load("res/textures/brick.png", &x, &y, &n, 0);
+	// Unbinds the OpenGL Texture object so that it can't accidentally be modified
+	glBindTexture(GL_TEXTURE_2D, 0);
 
-		// Assigns the image to the OpenGL Texture object
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
-		// Generates MipMaps
-		glGenerateMipmap(GL_TEXTURE_2D);
+	DEBUGPRINT("Created texture: " << m_texture);
+}
 
-		// Deletes the image data as it is already in the OpenGL Texture object
-		stbi_image_free(bytes);
+Texture::~Texture() {
+	DEBUGPRINT("Destroyed texture: " << m_texture);
+	glDeleteTextures(1, &m_texture);
+}
 
-		// Unbinds the OpenGL Texture object so that it can't accidentally be modified
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-	~Texture() {
-		glDeleteTextures(1, &m_texture);
-	}
+void Texture::LoadTextureData(std::string texturePath, GLenum textureSlot) {
+	m_textureSlot = textureSlot;
 
-	void Bind() {
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_texture);
-	}
+	int x, y, n;
+	// Flips the image so it appears right side up
+	stbi_set_flip_vertically_on_load(true);
+	// Reads the image from a file and stores it in bytes
+	unsigned char* bytes = stbi_load(texturePath.c_str(), &x, &y, &n, 0);
 
-private:
-	GLuint m_texture{ 0 };
-};
+	glActiveTexture(m_textureSlot);
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+
+	// Assigns the image to the OpenGL Texture object
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
+	// Generates MipMaps
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// Deletes the image data as it is already in the OpenGL Texture object
+	stbi_image_free(bytes);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Texture::BindTexture() {
+	glActiveTexture(m_textureSlot);
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+}
 
 #pragma endregion
 
 #pragma region Mesh
 
-std::vector<Mesh*> Mesh::renderableMeshes{};
-
-Mesh::Mesh(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer) {
-
+Mesh::Mesh() {
+	// Create OpenGL array and buffers
 	glGenVertexArrays(1, &m_vertexArray);
-	glBindVertexArray(m_vertexArray);
-
 	glGenBuffers(1, &m_vertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
-
 	glGenBuffers(1, &m_indexBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
-
-	glBufferData(GL_ARRAY_BUFFER, vBuffer.size() * sizeof(GLfloat), vBuffer.data(), GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, iBuffer.size() * sizeof(GLshort), iBuffer.data(), GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)0);
-	glEnableVertexAttribArray(0);	
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
-	glEnableVertexAttribArray(1);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	m_indexBufferSize = iBuffer.size();
-	renderableMeshes.push_back(this);
-
-	DEBUGPRINT("Created mesh");
+	
+	DEBUGPRINT("Created mesh: " << m_vertexArray);
 }
 
 Mesh::~Mesh() {
+	// Destroy OpenGL objects
 	glDeleteBuffers(1, &m_vertexBuffer);
 	glDeleteBuffers(1, &m_indexBuffer);
 	glDeleteVertexArrays(1, &m_vertexArray);
 
-	DEBUGPRINT("Destroyed mesh");
+	DEBUGPRINT("Destroyed mesh: " << m_vertexArray);
 }
 
-void Mesh::Bind() {
+void Mesh::LoadMeshData(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat) {
+	// Bind buffers 
+	glBindVertexArray(m_vertexArray);
+	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
+
+	// Send data to buffers
+	glBufferData(GL_ARRAY_BUFFER, vBuffer.size() * sizeof(GLfloat), vBuffer.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, iBuffer.size() * sizeof(GLshort), iBuffer.data(), GL_STATIC_DRAW);
+
+	// Set buffer layout
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+
+	// Unbind stuff so no explosions happen
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+
+	m_indexBufferSize = iBuffer.size();
+	m_indexBufferFormat = indexFormat;
+}
+
+void Mesh::BindMesh() {
 	glBindVertexArray(m_vertexArray);
 }
 
 #pragma endregion
 
-class Object {
-public:
-	Object() {
+#pragma region Model
 
+std::vector<Model*> Model::m_models;
+
+Model::Model() {
+	m_models.push_back(this);
+}
+
+Model::~Model() {
+	for (Texture* texture : m_textures) {
+		texture->~Texture();
 	}
-	~Object() {
 
+	std::vector<Model*>::iterator position = std::find(m_models.begin(), m_models.end(), this);
+	if (position != m_models.end()) {
+		m_models.erase(position);
+		DEBUGPRINT("Removed Model from model list: " << this);
 	}
+}
 
-	void Bind() {
 
+void Model::AddMesh(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat) {
+	m_mesh.LoadMeshData(vBuffer, iBuffer, indexFormat);
+}
+
+void Model::AddTexture(GLenum textureSlot, std::string textuprePath) {
+	Texture* tmp = new Texture();
+	tmp->LoadTextureData(textuprePath, textureSlot);
+	m_textures.push_back(tmp);
+
+}
+
+void Model::BindModel() {
+	m_mesh.BindMesh();
+
+	for (Texture* texture : m_textures) {
+		texture->BindTexture();
 	}
+}
 
-private:
-	std::vector<Texture> m_textures;
-	//Mesh m_mesh;
-
-};
+#pragma endregion
 
 // Store them as pointers cause they have to be created after initialization of OpenGL
 Shader* prePass = nullptr;
 Shader* firstPas = nullptr;
-
-Texture* popcat;
 
 // Default clear color
 glm::vec3 defaultClearColor = { 0.2f, 0.2f, 0.6f };
@@ -238,6 +271,8 @@ void RenderingInit() {
 	glEnable(GL_DEPTH_TEST);
 
 	glfwSetWindowSizeCallback(glfwGetCurrentContext(), RenderedWindowResizeCallback);
+
+	Model square;
 
 	// Create gBuffer for rendering
 	{
@@ -305,8 +340,6 @@ void RenderingInit() {
 	prePass = new Shader("res/shaders/pre.vert", "res/shaders/pre.frag");
 	firstPas = new Shader("res/shaders/first.vert", "res/shaders/first.frag");
 
-	popcat = new Texture(GL_TEXTURE0);
-
 	// Chack for debug flags from GLFW and enable debug in OpenGL if needed
 	GLint flags = 0;
 	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
@@ -322,8 +355,6 @@ void RenderingTerminate() {
 	// Free memory cause am a good person
 	delete(prePass);
 	delete(firstPas);
-
-	delete(popcat);
 
 	// Delete all OpenGL objects
 	glDeleteFramebuffers(1, &gBuffer);
@@ -371,12 +402,12 @@ void Render() {
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		popcat->Bind();
-
-		// Render data form all instances of mesh if enabled
-		for (Mesh* mesh : Mesh::renderableMeshes) {
-			mesh->Bind();
-			glDrawElements(GL_TRIANGLES, mesh->GetIndexBufferSize(), GL_UNSIGNED_SHORT, 0);
+		// Render data form all instances of Model if enabled
+		for (Model* model : Model::GetModelsVector()) {
+			if (model->isRendered) {
+				model->BindModel();
+				glDrawElements(GL_TRIANGLES, model->GetIndexBufferSize(), model->GetIndexBufferFormat(), 0);
+			}
 		}
 	}
 

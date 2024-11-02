@@ -12,7 +12,17 @@ class UIElement {
 public:
 	UIElement() {
 		elements.push_back(this);
+		DEBUGPRINT("Created UIElement: " << this);
 	}
+
+	~UIElement() {
+		std::vector<UIElement*>::iterator position = std::find(elements.begin(), elements.end(), this);
+		if (position != elements.end()) {
+			elements.erase(position);
+			DEBUGPRINT("Removed UIElement from list: " << this);
+		}
+	}
+
 	virtual void OnUIRender() = 0;
 
 	static std::vector<UIElement*> elements;
@@ -84,15 +94,15 @@ namespace UI {
 		}
 
 
-		if (UIElement::elements.size() > 1) {
-			ImGui::Begin("Objects");
+
+		ImGui::Begin("Models");
 
 			for (UIElement* element : UIElement::elements) {
 				element->OnUIRender();
 			}
 
-			ImGui::End();
-		}
+		ImGui::End();
+		
 	
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

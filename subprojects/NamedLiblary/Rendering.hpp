@@ -37,23 +37,40 @@ private:
 	GLuint m_shaderProgram = 0;
 };
 
+// Texture class
+class Texture {
+public:
+	Texture();
+	Texture(const Texture&) = delete;
+	~Texture();
+
+	void LoadTextureData(std::string texturePath, GLenum textureSlot);
+
+	void BindTexture();
+
+private:
+	GLuint m_texture{ 0 };
+	GLenum m_textureSlot{ 0 };
+
+};
+
 // Mesh class
-// After creation data gets rendered when calling Render()
 class Mesh {
 public:
-	// Creates OpenGL buffers and moves data to GPU from existing vectors
-	Mesh(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer);
+	// Creates OpenGL buffers
+	Mesh();
 	Mesh(const Mesh&) = delete;
 
 	~Mesh();
 
-	void Bind();
+	// Moves data to GPU from existing vectors
+	void LoadMeshData(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat);
+
+	void BindMesh();
 
 	// Returns size of the initially passed in index vector 
 	GLushort GetIndexBufferSize() { return m_indexBufferSize; }
-	bool* GetEnabled() { return m_isEnabled; }
-
-	static std::vector<Mesh*> renderableMeshes;
+	GLushort GetIndexBufferFormat() { return m_indexBufferFormat; }
 
 private:
 	GLuint m_vertexArray{ 0 };
@@ -61,8 +78,45 @@ private:
 	GLuint m_indexBuffer{ 0 };
 
 	GLushort m_indexBufferSize{ 0 };
+	GLenum m_indexBufferFormat{ 0 };
 
 	bool* m_isEnabled{ nullptr };
+};
+
+// Model class contains mesh data and textures
+// After creation data gets rendered when calling Render()
+class Model {
+public:
+	Model();
+	~Model();
+	Model(const Model&) = delete;
+
+	void AddMesh(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat);
+
+	void AddTexture(GLenum textureSlot, std::string textuprePath);
+
+	void BindModel();
+
+	GLushort GetIndexBufferSize() { return m_mesh.GetIndexBufferSize(); }
+	GLenum GetIndexBufferFormat() { return m_mesh.GetIndexBufferFormat(); }
+
+	static std::vector<Model*>& GetModelsVector() { return m_models; }
+
+
+public:
+	glm::vec3 position{ 0.0f };
+	glm::vec3 rotation{ 0.0f };
+	glm::vec3 scale{ 0.0f };
+
+	bool isRendered = true;
+
+private:
+	Mesh m_mesh;
+	std::vector<Texture*> m_textures;
+
+	glm::mat4 m_modelMatrix{ 1.0 };
+
+	static std::vector<Model*> m_models;
 };
 
 // Initializes all rendering stuff including a basic shader and render buffer
