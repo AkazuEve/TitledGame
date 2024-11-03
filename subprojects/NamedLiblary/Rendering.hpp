@@ -1,6 +1,5 @@
 #pragma once
 
-
 // Standard lib
 #include <vector>
 #include <fstream>
@@ -17,8 +16,11 @@
 #include "../../ext/source/glm/gtc/matrix_transform.hpp"
 #include "../../ext/source/glm/gtc/type_ptr.hpp"
 
-
+// GLFW for window resize callback
 #include "../../ext/precompiled/include/GLFW/glfw3.h"
+
+// UI class to render mroe advanced ui than im capable of
+#include "../../src/modules/UI.hpp"
 
 // Creates a shader that can be used for rendering objects
 class Shader {
@@ -127,6 +129,7 @@ private:
 	static std::vector<Model*> m_models;
 };
 
+// Camera class
 class Camera {
 public:
 	// Create camera instance with name
@@ -142,8 +145,8 @@ public:
 public:
 	glm::vec3 position{ 0.0f, -0.5f, -2.0f };
 	float fov{ 90.0f };
-	float nearPlane{ 0.01f };
-	float farPlane{ 100.0f };
+	float nearPlane{ 0.12f };
+	float farPlane{ 50.0f };
 
 	std::string name{};
 
@@ -154,6 +157,41 @@ private:
 	glm::mat4 projection{ 1.0f };
 
 	static std::vector<Camera*> m_cameras;
+};
+
+class ModelManager : UIElement {
+public:
+	ModelManager();
+	~ModelManager();
+
+	void OnUIRender() override;
+
+private:
+	std::vector<Model*>& m_models = Model::GetModelsVector();
+};
+
+class CameraManager : UIElement {
+public:
+	CameraManager();
+
+	~CameraManager();
+
+	void OnUIRender() override;
+
+private:
+	std::vector<Camera*>& m_cameras = Camera::GetCamerasVector();
+	Camera* m_currentCamera = nullptr;
+};
+
+class DebugBufferView : UIElement {
+public:	
+	DebugBufferView();
+	~DebugBufferView();
+
+	void OnUIRender() override;
+
+private:
+	GLuint m_curentBuffer{ 0 };
 };
 
 // Initializes all rendering stuff including a basic shader and render buffer

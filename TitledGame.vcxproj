@@ -103,6 +103,7 @@
     <ClCompile Include="ext\source\imgui\imgui_tables.cpp" />
     <ClCompile Include="ext\source\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\modules\UI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ext\source\glad\glad.h" />

@@ -44,6 +44,11 @@ static std::vector<GLushort> quadIndices = {
 Shader* prePass = nullptr;
 Shader* firstPas = nullptr;
 
+ModelManager* modelmanager = nullptr;
+CameraManager* cameraManager = nullptr;
+
+DebugBufferView* debugBufferView = nullptr;
+
 // Default clear color
 glm::vec3 defaultClearColor = { 0.2f, 0.2f, 0.6f };
 
@@ -336,12 +341,201 @@ void Camera::SendDataToShader() {
 
 #pragma endregion
 
+#pragma region ModelManager
+
+ModelManager::ModelManager() {
+
+}
+
+ModelManager::~ModelManager() {
+	for (Model* model : m_models) {
+		delete(model);
+	}
+}
+
+void ModelManager::OnUIRender() {
+	ImGui::Begin("Model Manager");
+
+	static char name[20]{ "Cat" };
+	static char textureName[20]{ "pop_cat" };
+	ImGui::InputText("Name", name, 20);
+	ImGui::InputText("Texture Name", textureName, 20);
+	if (ImGui::Button("Create Object")) {
+		static std::string pre = "res/textures/";
+		static std::string post = ".png";
+
+		std::string texturepPath = pre + textureName + post;
+
+		Model* tmpPtr = new Model;
+
+		// Vertices coordinates
+		std::vector<GLfloat> vertices = {
+			-0.5f, 0.0f,  0.5f,		0.0f, 0.0f,
+			-0.5f, 0.0f, -0.5f,		1.0f, 0.0f,
+			 0.5f, 0.0f, -0.5f,		0.0f, 0.0f,
+			 0.5f, 0.0f,  0.5f,		1.0f, 0.0f,
+			 0.0f, 0.8f,  0.0f,		0.5f, 1.0f
+		};
+
+		// Indices for vertices order
+		std::vector<GLushort> indices = {
+			0, 2, 1,
+			0, 3, 2,
+			0, 1, 4,
+			1, 2, 4,
+			2, 3, 4,
+			3, 0, 4
+		};
+
+		tmpPtr->AddMesh(name, vertices, indices, GL_UNSIGNED_SHORT);
+		tmpPtr->AddTexture(GL_TEXTURE0, texturepPath);
+	}
+
+	ImGui::Separator();
+
+	if (m_models.size() > 0) {
+
+			unsigned int i = 0;
+			for (Model* model : m_models) {
+				if (ImGui::TreeNode(std::string(model->name + "##" + std::to_string(i)).c_str())) {
+					i++;
+					ImGui::Checkbox("Is Rendered", &model->isRendered);
+					ImGui::DragFloat3("Position", (float*)&model->position, 0.05f, -10, 10);
+					ImGui::DragFloat3("Rotation", (float*)&model->rotation, 0.5f, -360, 360);
+					ImGui::DragFloat3("Scale", (float*)&model->scale, 0.05f, 0, 5);
+
+					if (ImGui::Button("Remove")) {
+						DEBUGPRINT("Removed Model from Object manager list: " << model);
+						delete(model);
+					}
+					ImGui::TreePop();
+				}
+			}
+
+		
+	}
+	ImGui::End();
+}
+#pragma endregion
+
+#pragma region CameraManager
+
+CameraManager::CameraManager() {
+	m_currentCamera = new Camera("Default", true);
+}
+
+CameraManager::~CameraManager() {
+	for (Camera* camera : m_cameras) {
+		delete(camera);
+	}
+}
+
+void CameraManager::OnUIRender() {
+	ImGui::Begin("Camera Manager");
+
+	static char newCameraName[20]{ "Not Default" };
+
+	ImGui::InputText("New Camera Name", newCameraName, 20);
+
+	if (ImGui::Button("Create new camera")) {
+		if (m_cameras.size() == 0) {
+			m_currentCamera = new Camera(newCameraName, true);
+		}
+		else {
+			new Camera(newCameraName, false);
+		}
+	}
+
+	ImGui::Separator();
+
+	for (Camera* camera : m_cameras) {
+		if (ImGui::TreeNode(camera->name.c_str())) {
+			ImGui::DragFloat3("Position", (float*)&camera->position, 0.05f, -10, 10);
+			ImGui::DragFloat("Fov", (float*)&camera->fov, 0.01f, 20.0f, 180.0f);
+			ImGui::DragFloat("Near Plane", (float*)&camera->nearPlane, 0.01f, 0.01f, 100.0f);
+			ImGui::DragFloat("Far Plane", (float*)&camera->farPlane, 0.01f, 20.0f, 100.0f);
+			if (ImGui::Button("Use")) {
+				if (camera != m_currentCamera) {
+					m_currentCamera->isUsed = false;
+					m_currentCamera = camera;
+					camera->isUsed = true;
+				}
+			}
+
+			if (ImGui::Button("Delete")) {
+				if (m_currentCamera == camera) {
+					for (Camera* cameraSearch : m_cameras) {
+						if (cameraSearch != camera) {
+							cameraSearch->isUsed = true;
+							m_currentCamera = cameraSearch;
+						}
+					}
+				}
+				delete(camera);
+			}
+			ImGui::TreePop();
+		}
+	}
+	ImGui::End();
+}
+
+#pragma endregion
+
+#pragma region DebugBufferView 
+
+DebugBufferView::DebugBufferView() {
+
+}
+
+DebugBufferView::~DebugBufferView() {
+
+}
+
+void DebugBufferView::OnUIRender() {
+	ImGui::Begin("Debug Buffer View");
+
+	if (ImGui::Button("Color")) {
+		m_curentBuffer = gColorTexture;
+	}
+	ImGui::SameLine();
+
+
+	if (ImGui::Button("Normal")) {
+		m_curentBuffer = gNormalTexture;
+	}
+	ImGui::SameLine();	
+
+	if (ImGui::Button("Depth")) {
+		m_curentBuffer = gDepthTexture;
+	}
+
+	ImGui::Separator();
+
+	if (m_curentBuffer) {
+		ImGui::Image(reinterpret_cast<ImTextureID>(m_curentBuffer), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+	}
+
+	ImGui::End();
+}
+
+#pragma endregion
+
 void RenderingInit() {
 	// Load all OpenGL functions
 	gladLoadGL();
 
+	UI::ImGuiInit("#version 460");
+
+	UI::SetColorBuffer(GetRenderBufferColorTexture());
+	UI::SetNoramalBuffer(GetRenderBufferNormalTexture());
+	UI::SetDepthBuffer(GetRenderBufferDepthTexture());
+
 	// Turns out depth buffer wont work when its not enabled :>
 	glEnable(GL_DEPTH_TEST);
+
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+	glFrontFace(GL_CCW);
 
 	// Setup resize callback so were always up to date with render resolution
 	glfwSetWindowSizeCallback(glfwGetCurrentContext(), RenderedWindowResizeCallback);
@@ -371,7 +565,7 @@ void RenderingInit() {
 		// Create frame buffer depth texture
 		glGenTextures(1, &gDepthTexture);
 		glBindTexture(GL_TEXTURE_2D, gDepthTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
@@ -412,6 +606,11 @@ void RenderingInit() {
 	prePass = new Shader("res/shaders/pre.vert", "res/shaders/pre.frag");
 	firstPas = new Shader("res/shaders/first.vert", "res/shaders/first.frag");
 
+	modelmanager = new ModelManager;
+	cameraManager = new CameraManager;
+
+	debugBufferView = new DebugBufferView;
+
 	modelUniform = glGetUniformLocation(prePass->GetShaderObject(), "model");
 	cameraUniform = glGetUniformLocation(prePass->GetShaderObject(), "camera");
 
@@ -427,9 +626,16 @@ void RenderingInit() {
 }
 
 void RenderingTerminate() {
+	UI::ImGuiTerminate();
+
 	// Free memory cause am a good person
 	delete(prePass);
 	delete(firstPas);
+
+	delete(modelmanager);
+	delete(cameraManager);
+
+	delete(debugBufferView);
 
 	// Delete all OpenGL objects
 	glDeleteFramebuffers(1, &gBuffer);
@@ -513,14 +719,21 @@ void Render() {
 		// Bind the first pass shader
 		firstPas->BindShader();
 
+		//Need to disable culling cause it dosnt work otherwise
+		glDisable(GL_CULL_FACE);
+
 		// Render the final image
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+
+		glEnable(GL_CULL_FACE);
 
 		// Unbind all gBuffer textures
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, 0);
+
+		UI::RenderUI();
 	}
 }
 
