@@ -4,21 +4,10 @@
 #include "../../../ext/source/stb/stbi.h"
 
 #pragma region PREDEF
+static MeshData LoadModelFromPLYFile(std::string filePath);
 static std::string LoadShaderFile(std::string file);
 void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam);
 void RenderedWindowResizeCallback(GLFWwindow* window, int width, int height);
-
-struct Vertex {
-	glm::vec3 pos;
-	glm::vec3 nor;
-	glm::vec2 tex;
-};
-
-struct MeshData {
-	std::vector<Vertex> vertices;
-	std::vector<GLuint> indices;
-};
-
 #pragma endregion
 
 #pragma region Const Variables
@@ -53,7 +42,7 @@ DebugBufferView* debugBufferView = nullptr;
 glm::vec3 defaultClearColor = { 0.2f, 0.2f, 0.6f };
 
 // gBuffer stuff
-GLuint gBuffer{ 0 }, gColorTexture{ 0 }, gNormalTexture{ 0 }, gDepthTexture{ 0 };
+GLuint gBuffer{ 0 }, gColorTexture{ 0 }, gPositionTexture{ 0 }, gNormalTexture{ 0 }, gDepthTexture{ 0 };
 unsigned int renderWidth{ 1440 }, renderHeight{ 810 };
 
 // Shader uniforms shortcuts
@@ -66,31 +55,45 @@ GLuint renderQuadVBO{ 0 }, renderQuadvBuffer{ 0 }, renderQuadiBuffer{ 0 };
 
 #pragma region Shader
 
-Shader::Shader(std::string vertexFile, std::string fragmentFile) {
+std::vector<Shader*> Shader::m_shaders;
+
+Shader::Shader(std::string name, std::string vertexFile, std::string fragmentFile) {
+	m_shaders.push_back(this);
 	m_shaderProgram = glCreateProgram();
 
+	this->name = name;
+
+	m_vertexFile = vertexFile;
+	m_fragmentFile = fragmentFile;
+
 	// Create temporary shader objects
-	GLuint vertexShader, fragmentShader;
+	GLuint vertexShader{ 0 }, fragmentShader{ 0 };
 
 	// Read and compile shader source code
-	CompileShader(vertexShader, vertexFile, GL_VERTEX_SHADER);
-	CompileShader(fragmentShader, fragmentFile, GL_FRAGMENT_SHADER);
+	if (CompileShader(vertexShader, m_vertexFile, GL_VERTEX_SHADER) && CompileShader(fragmentShader, m_fragmentFile, GL_FRAGMENT_SHADER)) {
+		// Attach shaders to program
+		glAttachShader(m_shaderProgram, vertexShader);
+		glAttachShader(m_shaderProgram, fragmentShader);
 
-	// Attach shaders to program
-	glAttachShader(m_shaderProgram, vertexShader);
-	glAttachShader(m_shaderProgram, fragmentShader);
+		// Link program
+			glLinkProgram(m_shaderProgram);
 
-	// Link program
-	glLinkProgram(m_shaderProgram);
+			// Delete temporary shader objects
+			glDeleteShader(vertexShader);
+			glDeleteShader(fragmentShader);
 
-	// Delete temporary shader objects
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	DEBUGPRINT("Created shader: " << m_shaderProgram);
+			DEBUGPRINT("Created shader: " << m_shaderProgram);
+	}
 }
 
 Shader::~Shader() {
+	// Remove this pointer from models vector
+	std::vector<Shader*>::iterator position = std::find(m_shaders.begin(), m_shaders.end(), this);
+	if (position != m_shaders.end()) {
+		m_shaders.erase(position);
+		DEBUGPRINT("Removed Shader from shader list: " << this);
+	}
+
 	DEBUGPRINT("Destroyed shader: " << m_shaderProgram);
 	glDeleteProgram(m_shaderProgram);
 }
@@ -99,7 +102,34 @@ void Shader::BindShader() {
 	glUseProgram(m_shaderProgram);
 }
 
-void Shader::CompileShader(GLuint& shader, std::string& file, GLint shaderType) {
+void Shader::RecompileShader() {
+	GLuint vertexShader{ 0 }, fragmentShader{ 0 };
+
+	// Read and compile shader source code
+	if (CompileShader(vertexShader, m_vertexFile, GL_VERTEX_SHADER) && CompileShader(fragmentShader, m_fragmentFile, GL_FRAGMENT_SHADER)) {
+		GLuint shaderProgram{ 0 };
+
+		shaderProgram = glCreateProgram();
+
+		glAttachShader(shaderProgram, vertexShader);
+		glAttachShader(shaderProgram, fragmentShader);
+
+		// Link program
+		glLinkProgram(shaderProgram);
+
+		// Delete temporary shader objects
+		glDeleteShader(vertexShader);
+		glDeleteShader(fragmentShader);
+
+		glDeleteProgram(m_shaderProgram);
+
+		m_shaderProgram = shaderProgram;
+
+		DEBUGPRINT("Shader " << name << " recompiled");
+	}
+}
+
+bool Shader::CompileShader(GLuint& shader, std::string& file, GLint shaderType) {
 
 	// Create shader object with passed in variable
 	shader = glCreateShader(shaderType);
@@ -125,7 +155,10 @@ void Shader::CompileShader(GLuint& shader, std::string& file, GLint shaderType) 
 		DEBUGPRINT(message);
 
 		free(message);
+		return false;
 	}
+
+	return true;
 }
 #pragma endregion
 
@@ -210,21 +243,26 @@ Mesh::~Mesh() {
 	DEBUGPRINT("Destroyed mesh: " << m_vertexArray);
 }
 
-void Mesh::LoadMeshData(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat) {
+void Mesh::LoadMeshData(const MeshData& data, GLenum indexFormat) {
 	// Bind buffers 
 	glBindVertexArray(m_vertexArray);
 	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
 
 	// Send data to buffers
-	glBufferData(GL_ARRAY_BUFFER, vBuffer.size() * sizeof(GLfloat), vBuffer.data(), GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, iBuffer.size() * sizeof(GLshort), iBuffer.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, data.vertices.size() * sizeof(Vertex), data.vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indices.size() * sizeof(GLshort), data.indices.data(), GL_STATIC_DRAW);
 
 	// Set buffer layout
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)0);
+	// Position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, pos)));
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, nor)));
 	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, tex)));
+	glEnableVertexAttribArray(2);
 
 	// Unbind stuff so no explosions happen
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -232,7 +270,7 @@ void Mesh::LoadMeshData(const std::vector<GLfloat>& vBuffer, const std::vector<G
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 
-	m_indexBufferSize = iBuffer.size();
+	m_indexBufferSize = data.indices.size();
 	m_indexBufferFormat = indexFormat;
 }
 
@@ -266,9 +304,9 @@ Model::~Model() {
 	}
 }
 
-void Model::AddMesh(std::string name, const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat) {
+void Model::AddMesh(std::string name, const MeshData& data, GLenum indexFormat) {
 	this->name = name;
-	m_mesh.LoadMeshData(vBuffer, iBuffer, indexFormat);
+	m_mesh.LoadMeshData(data, indexFormat);
 }
 
 void Model::AddTexture(GLenum textureSlot, std::string textuprePath) {
@@ -356,39 +394,22 @@ ModelManager::~ModelManager() {
 void ModelManager::OnUIRender() {
 	ImGui::Begin("Model Manager");
 
-	static char name[20]{ "Cat" };
-	static char textureName[20]{ "pop_cat" };
+	static char name[20]{ "Test" };
+	static char textureName[20]{ "brick" };
+	static char modelName[20]{ "untitled" };
 	ImGui::InputText("Name", name, 20);
 	ImGui::InputText("Texture Name", textureName, 20);
+	ImGui::InputText("Model Name", modelName, 20);
 	if (ImGui::Button("Create Object")) {
-		static std::string pre = "res/textures/";
-		static std::string post = ".png";
-
-		std::string texturepPath = pre + textureName + post;
+		std::string texturePath = std::string("res/textures/") + textureName + std::string(".png");
+		std::string modelPath = std::string("res/models/") + modelName + std::string(".ply");
 
 		Model* tmpPtr = new Model;
 
-		// Vertices coordinates
-		std::vector<GLfloat> vertices = {
-			-0.5f, 0.0f,  0.5f,		0.0f, 0.0f,
-			-0.5f, 0.0f, -0.5f,		1.0f, 0.0f,
-			 0.5f, 0.0f, -0.5f,		0.0f, 0.0f,
-			 0.5f, 0.0f,  0.5f,		1.0f, 0.0f,
-			 0.0f, 0.8f,  0.0f,		0.5f, 1.0f
-		};
+		MeshData data = LoadModelFromPLYFile(modelPath);
 
-		// Indices for vertices order
-		std::vector<GLushort> indices = {
-			0, 2, 1,
-			0, 3, 2,
-			0, 1, 4,
-			1, 2, 4,
-			2, 3, 4,
-			3, 0, 4
-		};
-
-		tmpPtr->AddMesh(name, vertices, indices, GL_UNSIGNED_SHORT);
-		tmpPtr->AddTexture(GL_TEXTURE0, texturepPath);
+		tmpPtr->AddMesh(name, data, GL_UNSIGNED_SHORT);
+		tmpPtr->AddTexture(GL_TEXTURE0, texturePath);
 	}
 
 	ImGui::Separator();
@@ -499,6 +520,10 @@ void DebugBufferView::OnUIRender() {
 	}
 	ImGui::SameLine();
 
+	if (ImGui::Button("Position")) {
+		m_curentBuffer = gPositionTexture;
+	}
+	ImGui::SameLine();
 
 	if (ImGui::Button("Normal")) {
 		m_curentBuffer = gNormalTexture;
@@ -509,10 +534,25 @@ void DebugBufferView::OnUIRender() {
 		m_curentBuffer = gDepthTexture;
 	}
 
+	ImGui::SameLine();
+
+	if (ImGui::Button("None")) {
+		m_curentBuffer = 0;
+	}
+
 	ImGui::Separator();
 
 	if (m_curentBuffer) {
 		ImGui::Image(reinterpret_cast<ImTextureID>(m_curentBuffer), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
+	}
+
+	for (Shader* shader : Shader::GetShadersVector()) {
+		if (ImGui::TreeNode(shader->name.c_str())) {
+			if (ImGui::Button("Recompile")) {
+				shader->RecompileShader();
+			}
+			ImGui::TreePop();
+		}
 	}
 
 	ImGui::End();
@@ -533,9 +573,9 @@ void RenderingInit() {
 	// Turns out depth buffer wont work when its not enabled :>
 	glEnable(GL_DEPTH_TEST);
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
-	glFrontFace(GL_CCW);
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_FRONT);
+	//glFrontFace(GL_CCW);
 
 	// Setup resize callback so were always up to date with render resolution
 	glfwSetWindowSizeCallback(glfwGetCurrentContext(), RenderedWindowResizeCallback);
@@ -554,25 +594,33 @@ void RenderingInit() {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gColorTexture, 0);
 
+		// Create frame buffer position texture
+		glGenTextures(1, &gPositionTexture);
+		glBindTexture(GL_TEXTURE_2D, gPositionTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gPositionTexture, 0);
+
 		// Create frame buffer color texture 2
 		glGenTextures(1, &gNormalTexture);
 		glBindTexture(GL_TEXTURE_2D, gNormalTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormalTexture, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gNormalTexture, 0);
 
 		// Create frame buffer depth texture
 		glGenTextures(1, &gDepthTexture);
 		glBindTexture(GL_TEXTURE_2D, gDepthTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
 
 		// Attach textures to frame buffer
-		GLuint attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_DEPTH_ATTACHMENT};
-		glDrawBuffers(2, attachments);
+		GLuint attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_DEPTH_ATTACHMENT};
+		glDrawBuffers(3, attachments);
 	}
 
 	// Create quad for rendering
@@ -603,8 +651,8 @@ void RenderingInit() {
 	}
 
 	// Create the render pipeline shaders
-	prePass = new Shader("res/shaders/pre.vert", "res/shaders/pre.frag");
-	firstPas = new Shader("res/shaders/first.vert", "res/shaders/first.frag");
+	prePass = new Shader("Pre Pass", "res/shaders/pre.vert", "res/shaders/pre.frag");
+	firstPas = new Shader("First Pass", "res/shaders/first.vert", "res/shaders/first.frag");
 
 	modelmanager = new ModelManager;
 	cameraManager = new CameraManager;
@@ -674,8 +722,13 @@ void Render() {
 
 		glBindTexture(GL_TEXTURE_2D, gColorTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+
+		glBindTexture(GL_TEXTURE_2D, gPositionTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+
 		glBindTexture(GL_TEXTURE_2D, gNormalTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+
 		glBindTexture(GL_TEXTURE_2D, gDepthTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
@@ -713,24 +766,30 @@ void Render() {
 		// Setup gBuffer textures so thier data can be used to render the final image
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, gColorTexture);
+
 		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, gPositionTexture);
+
+		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, gNormalTexture);
 
 		// Bind the first pass shader
 		firstPas->BindShader();
 
 		//Need to disable culling cause it dosnt work otherwise
-		glDisable(GL_CULL_FACE);
+		//glDisable(GL_CULL_FACE);
 
 		// Render the final image
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 
 		// Unbind all gBuffer textures
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		UI::RenderUI();
@@ -739,10 +798,12 @@ void Render() {
 
 #pragma region HelperFunctions
 
-static MeshData LoadModelFromPLYFile(std::string& filePath) {
+static MeshData LoadModelFromPLYFile(std::string filePath) {
 	std::ifstream file{ filePath };
 	if (!file.is_open())
 		throw std::exception("Failed to open file");
+
+	DEBUGPRINT("Loading ply file: " << filePath);
 
 	MeshData data;
 	Vertex veretx;
@@ -771,11 +832,13 @@ static MeshData LoadModelFromPLYFile(std::string& filePath) {
 			if (word == "vertex") {
 				stream >> vertexCount;
 				data.vertices.reserve(vertexCount);
+				DEBUGPRINT("Vertex count: " << vertexCount);
 			}
 
 			if (word == "face") {
 				stream >> triangleCount;
 				data.indices.reserve(3 * triangleCount);
+				DEBUGPRINT("Triangle count: " << triangleCount);
 			}
 		}
 

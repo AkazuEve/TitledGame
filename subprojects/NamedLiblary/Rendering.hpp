@@ -22,13 +22,28 @@
 // UI class to render mroe advanced ui than im capable of
 #include "../../src/modules/UI.hpp"
 
+struct Vertex {
+	Vertex(glm::vec3 postition, glm::vec3 normal, glm::vec2 textureCoordinate) : pos(postition), nor(normal), tex(textureCoordinate) { }
+	Vertex() {}
+	glm::vec3 pos{};
+	glm::vec3 nor{};
+	glm::vec2 tex{};
+};
+
+struct MeshData {
+	std::vector<Vertex> vertices;
+	std::vector<GLushort> indices;
+
+	GLenum indexFormat{ 0 };
+};
+
 // Creates a shader that can be used for rendering objects
 class Shader {
 public:
 	// Creates a shader program from 2 file paths
 	// @param absolute or relative path to vertex shader
 	// @param absolute or relative path to fragment shader
-	Shader(std::string vertexFile, std::string fragmentFile);
+	Shader(std::string name, std::string vertexFile, std::string fragmentFile);
 	Shader(const Shader&) = delete;
 
 	~Shader();
@@ -36,13 +51,25 @@ public:
 	// Sets the used shader to this one
 	void BindShader();
 
+	void RecompileShader();
+
 	// Gets the underlying shader object
 	GLuint GetShaderObject() { return m_shaderProgram; }
 
+	static std::vector<Shader*>& GetShadersVector() { return m_shaders; }
+
+public:
+	std::string name{};
+
 private:
-	void CompileShader(GLuint& shader, std::string& file, GLint shaderType);
+	bool CompileShader(GLuint& shader, std::string& file, GLint shaderType);
+
 private:
 	GLuint m_shaderProgram = 0;
+
+	std::string m_vertexFile{}, m_fragmentFile{};
+
+	static std::vector<Shader*> m_shaders;
 };
 
 // Texture class
@@ -74,7 +101,7 @@ public:
 	~Mesh();
 
 	// Moves data to GPU from existing vectors
-	void LoadMeshData(const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat);
+	void LoadMeshData(const MeshData& data, GLenum indexFormat);
 
 	void BindMesh();
 
@@ -100,7 +127,7 @@ public:
 	~Model();
 	Model(const Model&) = delete;
 
-	void AddMesh(std::string name, const std::vector<GLfloat>& vBuffer, const std::vector<GLushort>& iBuffer, GLenum indexFormat);
+	void AddMesh(std::string name, const MeshData& data, GLenum indexFormat);
 
 	void AddTexture(GLenum textureSlot, std::string textuprePath);
 
