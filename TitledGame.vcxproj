@@ -123,6 +123,8 @@
     <ClInclude Include="src\modules\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\shaders\default.frag" />
+    <None Include="res\shaders\default.vert" />
     <None Include="res\shaders\first.frag" />
     <None Include="res\shaders\first.vert" />
     <None Include="res\shaders\pre.frag" />

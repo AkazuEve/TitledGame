@@ -30,8 +30,10 @@ static std::vector<GLushort> quadIndices = {
 #pragma region Variables
 
 // Store them as pointers cause they have to be created after initialization of OpenGL
-Shader* prePass = nullptr;
-Shader* firstPas = nullptr;
+//Shader* prePass = nullptr;
+//Shader* firstPas = nullptr;
+
+Shader* defaultShader = nullptr;
 
 ModelManager* modelmanager = nullptr;
 CameraManager* cameraManager = nullptr;
@@ -42,14 +44,14 @@ DebugBufferView* debugBufferView = nullptr;
 glm::vec3 defaultClearColor = { 0.2f, 0.2f, 0.6f };
 
 // gBuffer stuff
-GLuint gBuffer{ 0 }, gColorTexture{ 0 }, gPositionTexture{ 0 }, gNormalTexture{ 0 }, gDepthTexture{ 0 };
+//GLuint gBuffer{ 0 }, gColorTexture{ 0 }, gPositionTexture{ 0 }, gNormalTexture{ 0 }, gDepthTexture{ 0 };
 unsigned int renderWidth{ 1440 }, renderHeight{ 810 };
 
 // Shader uniforms shortcuts
 GLuint cameraUniform{ 0 }, modelUniform{ 0 };
 
 // Render quad stuff
-GLuint renderQuadVBO{ 0 }, renderQuadvBuffer{ 0 }, renderQuadiBuffer{ 0 };
+//GLuint renderQuadVBO{ 0 }, renderQuadvBuffer{ 0 }, renderQuadiBuffer{ 0 };
 
 #pragma endregion
 
@@ -516,22 +518,22 @@ void DebugBufferView::OnUIRender() {
 	ImGui::Begin("Debug Buffer View");
 
 	if (ImGui::Button("Color")) {
-		m_curentBuffer = gColorTexture;
+		//m_curentBuffer = gColorTexture;
 	}
 	ImGui::SameLine();
 
 	if (ImGui::Button("Position")) {
-		m_curentBuffer = gPositionTexture;
+		//m_curentBuffer = gPositionTexture;
 	}
 	ImGui::SameLine();
 
 	if (ImGui::Button("Normal")) {
-		m_curentBuffer = gNormalTexture;
+		//m_curentBuffer = gNormalTexture;
 	}
 	ImGui::SameLine();	
 
 	if (ImGui::Button("Depth")) {
-		m_curentBuffer = gDepthTexture;
+		//m_curentBuffer = gDepthTexture;
 	}
 
 	ImGui::SameLine();
@@ -566,10 +568,6 @@ void RenderingInit() {
 
 	UI::ImGuiInit("#version 460");
 
-	UI::SetColorBuffer(GetRenderBufferColorTexture());
-	UI::SetNoramalBuffer(GetRenderBufferNormalTexture());
-	UI::SetDepthBuffer(GetRenderBufferDepthTexture());
-
 	// Turns out depth buffer wont work when its not enabled :>
 	glEnable(GL_DEPTH_TEST);
 
@@ -580,7 +578,8 @@ void RenderingInit() {
 	// Setup resize callback so were always up to date with render resolution
 	glfwSetWindowSizeCallback(glfwGetCurrentContext(), RenderedWindowResizeCallback);
 
-	// Create gBuffer for rendering
+	// Create gBuffer for rendering 
+	/*
 	{
 		// Generate frame buffer
 		glGenFramebuffers(1, &gBuffer);
@@ -649,18 +648,20 @@ void RenderingInit() {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
+	*/
 
 	// Create the render pipeline shaders
-	prePass = new Shader("Pre Pass", "res/shaders/pre.vert", "res/shaders/pre.frag");
-	firstPas = new Shader("First Pass", "res/shaders/first.vert", "res/shaders/first.frag");
+	//prePass = new Shader("Pre Pass", "res/shaders/pre.vert", "res/shaders/pre.frag");
+	//firstPas = new Shader("First Pass", "res/shaders/first.vert", "res/shaders/first.frag");
+	defaultShader = new Shader("Default", "res/shaders/default.vert", "res/shaders/default.frag");
 
 	modelmanager = new ModelManager;
 	cameraManager = new CameraManager;
 
 	debugBufferView = new DebugBufferView;
 
-	modelUniform = glGetUniformLocation(prePass->GetShaderObject(), "model");
-	cameraUniform = glGetUniformLocation(prePass->GetShaderObject(), "camera");
+	modelUniform = glGetUniformLocation(defaultShader->GetShaderObject(), "model");
+	cameraUniform = glGetUniformLocation(defaultShader->GetShaderObject(), "camera");
 
 	// Chack for debug flags from GLFW and enable debug in OpenGL if needed
 	GLint flags = 0;
@@ -677,8 +678,8 @@ void RenderingTerminate() {
 	UI::ImGuiTerminate();
 
 	// Free memory cause am a good person
-	delete(prePass);
-	delete(firstPas);
+	//delete(prePass);
+	//delete(firstPas);
 
 	delete(modelmanager);
 	delete(cameraManager);
@@ -686,32 +687,34 @@ void RenderingTerminate() {
 	delete(debugBufferView);
 
 	// Delete all OpenGL objects
-	glDeleteFramebuffers(1, &gBuffer);
-	glDeleteTextures(1, &gColorTexture);
-	glDeleteTextures(1, &gNormalTexture);
+	//glDeleteFramebuffers(1, &gBuffer);
+	//glDeleteTextures(1, &gColorTexture);
+	//glDeleteTextures(1, &gNormalTexture);
 
-	glDeleteVertexArrays(1, &renderQuadVBO);
-	glDeleteBuffers(1, &renderQuadvBuffer);
-	glDeleteBuffers(1, &renderQuadiBuffer);
+	//glDeleteVertexArrays(1, &renderQuadVBO);
+	//glDeleteBuffers(1, &renderQuadvBuffer);
+	//glDeleteBuffers(1, &renderQuadiBuffer);
 }
 
 GLuint GetRenderBufferColorTexture() {
-	return gColorTexture;
+	return 0;// gColorTexture;
 }
 
 GLuint GetRenderBufferNormalTexture() {
-	return gNormalTexture;
+	return 0;// gNormalTexture;
 }
 
 GLuint GetRenderBufferDepthTexture() {
-	return gDepthTexture;
+	return 0;// gDepthTexture;
 }
 
 void Render() {
 	// Run render prepass
 	{
 		// Bind the gBuffer
-		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+		//glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// Clear color and depth buffer
 		glClearColor(defaultClearColor.r, defaultClearColor.g, defaultClearColor.b, 1.0f);
@@ -720,22 +723,24 @@ void Render() {
 		// Set rendering resolution
 		glViewport(0, 0, renderWidth, renderHeight);
 
-		glBindTexture(GL_TEXTURE_2D, gColorTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+		//glBindTexture(GL_TEXTURE_2D, gColorTexture);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 
-		glBindTexture(GL_TEXTURE_2D, gPositionTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+		//glBindTexture(GL_TEXTURE_2D, gPositionTexture);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 
-		glBindTexture(GL_TEXTURE_2D, gNormalTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+		//glBindTexture(GL_TEXTURE_2D, gNormalTexture);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderWidth, renderHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 
-		glBindTexture(GL_TEXTURE_2D, gDepthTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		//glBindTexture(GL_TEXTURE_2D, gDepthTexture);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, renderWidth, renderHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
-		glBindTexture(GL_TEXTURE_2D, 0);
+		//glBindTexture(GL_TEXTURE_2D, 0);
 
 		// Set pre pass shader as active
-		prePass->BindShader();
+		//prePass->BindShader();
+
+		defaultShader->BindShader();
 
 		// Render data form all instances of Model if enabled
 		for (Camera* camera : Camera::GetCamerasVector()) {
@@ -755,42 +760,42 @@ void Render() {
 	// Run first pass
 	{
 		// Bind default framebuffer
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// Clear color and depth buffer
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Bind a whole screen square
-		glBindVertexArray(renderQuadVBO);
+		//glBindVertexArray(renderQuadVBO);
 
 		// Setup gBuffer textures so thier data can be used to render the final image
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, gColorTexture);
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, gColorTexture);
 
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, gPositionTexture);
+		//glActiveTexture(GL_TEXTURE1);
+		//glBindTexture(GL_TEXTURE_2D, gPositionTexture);
 
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, gNormalTexture);
+		//glActiveTexture(GL_TEXTURE2);
+		//glBindTexture(GL_TEXTURE_2D, gNormalTexture);
 
 		// Bind the first pass shader
-		firstPas->BindShader();
+		//firstPas->BindShader();
 
 		//Need to disable culling cause it dosnt work otherwise
 		//glDisable(GL_CULL_FACE);
 
 		// Render the final image
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
 		//glEnable(GL_CULL_FACE);
 
 		// Unbind all gBuffer textures
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, 0);
+		//glActiveTexture(GL_TEXTURE1);
+		//glBindTexture(GL_TEXTURE_2D, 0);
+		//glActiveTexture(GL_TEXTURE2);
+		//glBindTexture(GL_TEXTURE_2D, 0);
 
 		UI::RenderUI();
 	}

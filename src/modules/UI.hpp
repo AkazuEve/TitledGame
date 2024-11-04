@@ -26,10 +26,6 @@ private:
 };
 
 namespace UI {
-	void SetColorBuffer(unsigned int buffer);
-	void SetNoramalBuffer(unsigned int buffer);
-	void SetDepthBuffer(unsigned int buffer);
-
 	// Creates ImGui context and sets up for OpenGL3 and GLFW
 	void ImGuiInit(const char* version);
 

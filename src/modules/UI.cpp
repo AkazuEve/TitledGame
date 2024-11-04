@@ -17,16 +17,6 @@ UIElement::~UIElement() {
 std::vector <UIElement*> UIElement::elements{};
 
 namespace UI {
-	unsigned int gBufferColor{ 0 };
-	unsigned int gBufferNormal{ 0 };
-	unsigned int gBufferDepth{ 0 };
-
-	unsigned int currentBuffer{ 0 };
-
-	void SetColorBuffer(unsigned int buffer) { gBufferColor = buffer; }
-	void SetNoramalBuffer(unsigned int buffer) { gBufferNormal = buffer; }
-	void SetDepthBuffer(unsigned int buffer) { gBufferDepth = buffer; }
-
 	// Creates ImGui context and sets up for OpenGL3 and GLFW
 	void ImGuiInit(const char* version) {
 		IMGUI_CHECKVERSION();
