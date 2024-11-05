@@ -58,6 +58,10 @@ public:
 
 	static std::vector<Shader*>& GetShadersVector() { return m_shaders; }
 
+	GLuint GetModelUniformLocation() { return m_modelUniform; }
+	GLuint GetModelNormalUniformLocation() { return m_modelNormalUniform; }
+	GLuint GetCameraUniformLocation() { return m_cameraUniform; }
+
 public:
 	std::string name{};
 
@@ -65,11 +69,24 @@ private:
 	bool CompileShader(GLuint& shader, std::string& file, GLint shaderType);
 
 private:
-	GLuint m_shaderProgram = 0;
+	GLuint m_shaderProgram{ 0 };
+
+	GLuint m_modelUniform{ 0 }, m_modelNormalUniform{ 0 }, m_cameraUniform{ 0 };
 
 	std::string m_vertexFile{}, m_fragmentFile{};
 
 	static std::vector<Shader*> m_shaders;
+};
+
+class ShaderManager : UIElement {
+public:
+	ShaderManager();
+	~ShaderManager();
+
+	void OnUIRender() override;
+
+private:
+	std::vector<Shader*>& m_shaders = Shader::GetShadersVector();
 };
 
 // Texture class
@@ -152,8 +169,22 @@ private:
 	std::vector<Texture*> m_textures;
 
 	glm::mat4 m_modelMatrix{ 1.0 };
+	glm::mat4 m_modelNormalMatrix{ 1.0 };
+
+	static glm::mat4 sm_identityMatrix;
 
 	static std::vector<Model*> m_models;
+};
+
+class ModelManager : UIElement {
+public:
+	ModelManager();
+	~ModelManager();
+
+	void OnUIRender() override;
+
+private:
+	std::vector<Model*>& m_models = Model::GetModelsVector();
 };
 
 // Camera class
@@ -170,7 +201,7 @@ public:
 	static std::vector<Camera*>& GetCamerasVector() { return m_cameras; }
 
 public:
-	glm::vec3 position{ 0.0f, -0.5f, -2.0f };
+	glm::vec3 position{ 0.0f, 0.0f, -5.0f };
 	float fov{ 90.0f };
 	float nearPlane{ 0.12f };
 	float farPlane{ 50.0f };
@@ -186,17 +217,6 @@ private:
 	static std::vector<Camera*> m_cameras;
 };
 
-class ModelManager : UIElement {
-public:
-	ModelManager();
-	~ModelManager();
-
-	void OnUIRender() override;
-
-private:
-	std::vector<Model*>& m_models = Model::GetModelsVector();
-};
-
 class CameraManager : UIElement {
 public:
 	CameraManager();
@@ -210,31 +230,11 @@ private:
 	Camera* m_currentCamera = nullptr;
 };
 
-class DebugBufferView : UIElement {
-public:	
-	DebugBufferView();
-	~DebugBufferView();
-
-	void OnUIRender() override;
-
-private:
-	GLuint m_curentBuffer{ 0 };
-};
-
 // Initializes all rendering stuff including a basic shader and render buffer
 void RenderingInit();
 
 // Frees all memory and deletes all OpenGL objects
 void RenderingTerminate();
-
-// Get the id of currently used gBuffer color texture
-GLuint GetRenderBufferColorTexture();
-
-// Get the id of currently used gBuffer normal texture
-GLuint GetRenderBufferNormalTexture();
-
-// Get the id of currently used gBuffer depth texture
-GLuint GetRenderBufferDepthTexture();
 
 //Render all data stored in mesh classes.
 //Requires an existing opengl rendering context.

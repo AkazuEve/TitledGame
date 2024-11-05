@@ -8,15 +8,11 @@ in vec4 Normal;
 in vec2 TextureCoordinate;
 
 void main() {
-	//Color = texture(ColorTexture, TextureCoordinate);
-	//Color = Normal;
-	//Color = Position;
-
-	vec3 lightPos = vec3(1.0);
+	vec3 lightPos = vec3(0.0, 1.0, 0.0);
 
 	vec3 lightDir = normalize(lightPos - Position.xyz);  
 
 	float diff = max(dot(Normal.xyz, lightDir), 0.2);
 
-	Color = diff * texture(ColorTexture, TextureCoordinate);
+	Color = diff * (texture(ColorTexture, TextureCoordinate) * 1.5);
 }
