@@ -6,8 +6,8 @@
 #pragma region PREDEF
 static MeshData LoadModelFromPLYFile(std::string filePath);
 static std::string LoadShaderFile(std::string file);
-void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam);
-void RenderedWindowResizeCallback(GLFWwindow* window, int width, int height);
+static void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam);
+static void RenderedWindowResizeCallback(GLFWwindow* window, int width, int height);
 #pragma endregion
 
 #pragma region Const Variables
@@ -36,6 +36,8 @@ Shader* positionDebugShader = nullptr;
 
 Shader* currentShader = nullptr;
 
+Camera* currentCamera;
+
 ShaderManager* shaderManager = nullptr;
 
 CameraManager* cameraManager = nullptr;
@@ -48,7 +50,7 @@ glm::vec3 defaultClearColor = { 0.2f, 0.2f, 0.6f };
 // Render buffer stuff
 unsigned int renderWidth{ 1440 }, renderHeight{ 810 };
 
-// Render quad stuff
+GLuint renderBufferColorTexture{ 0 };
 
 #pragma endregion
 
@@ -295,15 +297,7 @@ Mesh::~Mesh() {
 }
 
 void Mesh::LoadMeshData(const MeshData& data, GLenum indexFormat) {
-	// Bind buffers 
-	//glBindVertexArray(m_vertexArray);
-	//glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
-
 	// Send data to buffers
-	//glBufferData(GL_ARRAY_BUFFER, data.vertices.size() * sizeof(Vertex), data.vertices.data(), GL_STATIC_DRAW);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indices.size() * sizeof(GLshort), data.indices.data(), GL_STATIC_DRAW);
-
 	glNamedBufferStorage(m_vertexBuffer, data.vertices.size() * sizeof(Vertex), data.vertices.data(), 0);
 	glNamedBufferStorage(m_indexBuffer, data.indices.size() * sizeof(GLshort), data.indices.data(), 0);
 
@@ -311,16 +305,6 @@ void Mesh::LoadMeshData(const MeshData& data, GLenum indexFormat) {
 	glVertexArrayElementBuffer(m_vertexArray, m_indexBuffer);
 
 	// Set buffer layout
-	// Position
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, pos)));
-	//glEnableVertexAttribArray(0);
-
-	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, nor)));
-	//glEnableVertexAttribArray(1);
-
-	//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, tex)));
-	//glEnableVertexAttribArray(2);
-
 	glEnableVertexArrayAttrib(m_vertexArray, 0);
 	glVertexArrayAttribFormat(m_vertexArray, 0, 3, GL_FLOAT, GL_FALSE, (GLuint)(offsetof(Vertex, pos)));
 	glVertexArrayAttribBinding(m_vertexArray, 0, 0);
@@ -332,12 +316,6 @@ void Mesh::LoadMeshData(const MeshData& data, GLenum indexFormat) {
 	glEnableVertexArrayAttrib(m_vertexArray, 2);
 	glVertexArrayAttribFormat(m_vertexArray, 2, 2, GL_FLOAT, GL_FALSE, (GLuint)(offsetof(Vertex, tex)));
 	glVertexArrayAttribBinding(m_vertexArray, 2, 0);
-
-	// Unbind stuff so no explosions happen
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-	//glBindVertexArray(0);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 
 	m_indexBufferSize = data.indices.size();
 	m_indexBufferFormat = indexFormat;
@@ -423,13 +401,22 @@ void Model::BindModel() {
 #pragma region ModelManager
 
 ModelManager::ModelManager() {
-
+	CreateModel("Default", "res/models/untitled.ply", "res/textures/brick.png", GL_UNSIGNED_SHORT);
 }
 
 ModelManager::~ModelManager() {
 	for (Model* model : m_models) {
 		delete(model);
 	}
+}
+
+void ModelManager::CreateModel(std::string name, std::string modelPath, std::string texturePath, GLenum indexFormat) {
+	Model* tmpPtr = new Model;
+
+	MeshData data = LoadModelFromPLYFile(modelPath);
+
+	tmpPtr->AddMesh(name, data, indexFormat);
+	tmpPtr->AddTexture(GL_TEXTURE0, texturePath);
 }
 
 void ModelManager::OnUIRender() {
@@ -445,12 +432,7 @@ void ModelManager::OnUIRender() {
 		std::string texturePath = std::string("res/textures/") + textureName + std::string(".png");
 		std::string modelPath = std::string("res/models/") + modelName + std::string(".ply");
 
-		Model* tmpPtr = new Model;
-
-		MeshData data = LoadModelFromPLYFile(modelPath);
-
-		tmpPtr->AddMesh(name, data, GL_UNSIGNED_SHORT);
-		tmpPtr->AddTexture(GL_TEXTURE0, texturePath);
+		CreateModel(name, modelPath, texturePath, GL_UNSIGNED_SHORT);
 	}
 
 	ImGui::Separator();
@@ -470,6 +452,13 @@ void ModelManager::OnUIRender() {
 					DEBUGPRINT("Removed Model from Object manager list: " << model);
 					delete(model);
 				}
+				ImGui::SameLine();
+				if (ImGui::Button("Reset Transform")) {
+					model->position = glm::vec3(0.0f);
+					model->rotation = glm::vec3(0.0f);
+					model->scale = glm::vec3(1.0f);
+				}
+
 				ImGui::TreePop();
 			}
 		}
@@ -482,23 +471,13 @@ void ModelManager::OnUIRender() {
 
 #pragma region Camera
 
-std::vector<Camera*> Camera::m_cameras{};
+std::vector<Camera*> Camera::m_camers;
 
 Camera::Camera(std::string name, bool enabled) {
 	this->name = name;
 	this->isUsed = enabled;
-	// Push this pointer to cameras vector
-	m_cameras.push_back(this);
-	DEBUGPRINT("Added " << name << " Camera to camera list: " << this);
-}
-
-Camera::~Camera() {
-	// Remove this pointer from cameras vector
-	std::vector<Camera*>::iterator position = std::find(m_cameras.begin(), m_cameras.end(), this);
-	if (position != m_cameras.end()) {
-		m_cameras.erase(position);
-		DEBUGPRINT("Removed Camera " << name << "from camera list: " << this);
-	}
+	
+	DEBUGPRINT("Added " << name << " Camera to camera pointer list: " << this);
 }
 
 void Camera::SendDataToShader() {
@@ -520,7 +499,8 @@ void Camera::SendDataToShader() {
 #pragma region CameraManager
 
 CameraManager::CameraManager() {
-	m_currentCamera = new Camera("Default", true);
+	m_cameras.push_back(new Camera("Default", true));
+	currentCamera = m_cameras[0];
 }
 
 CameraManager::~CameraManager() {
@@ -528,6 +508,11 @@ CameraManager::~CameraManager() {
 		delete(camera);
 	}
 }
+
+void CameraManager::CreateCamera(std::string name, bool enabled) {
+	m_cameras.push_back(new Camera(name, enabled));
+}
+
 
 void CameraManager::OnUIRender() {
 	ImGui::Begin("Camera Manager");
@@ -537,41 +522,43 @@ void CameraManager::OnUIRender() {
 	ImGui::InputText("New Camera Name", newCameraName, 20);
 
 	if (ImGui::Button("Create new camera")) {
-		if (m_cameras.size() == 0) {
-			m_currentCamera = new Camera(newCameraName, true);
-		}
-		else {
-			new Camera(newCameraName, false);
-		}
+		m_cameras.push_back(new Camera(newCameraName, true));
 	}
 
 	ImGui::Separator();
 
 	for (Camera* camera : m_cameras) {
+
 		if (ImGui::TreeNode(camera->name.c_str())) {
 			ImGui::DragFloat3("Position", (float*)&camera->position, 0.05f, -10, 10);
 			ImGui::DragFloat("Fov", (float*)&camera->fov, 0.01f, 20.0f, 180.0f);
 			ImGui::DragFloat("Near Plane", (float*)&camera->nearPlane, 0.01f, 0.01f, 100.0f);
 			ImGui::DragFloat("Far Plane", (float*)&camera->farPlane, 0.01f, 20.0f, 100.0f);
+
 			if (ImGui::Button("Use")) {
-				if (camera != m_currentCamera) {
-					m_currentCamera->isUsed = false;
-					m_currentCamera = camera;
-					camera->isUsed = true;
-				}
+				currentCamera = camera;
 			}
 
-			if (ImGui::Button("Delete")) {
-				if (m_currentCamera == camera) {
-					for (Camera* cameraSearch : m_cameras) {
-						if (cameraSearch != camera) {
-							cameraSearch->isUsed = true;
-							m_currentCamera = cameraSearch;
-						}
+			ImGui::SameLine();
+
+			if (m_cameras.size() > 1) {
+				if (ImGui::Button("Delete")) {
+					// Remove this pointer from camera pointer vector
+					std::vector<Camera*>::iterator position = std::find(m_cameras.begin(), m_cameras.end(), camera);
+					if (position != m_cameras.end()) {
+						m_cameras.erase(position);
+						DEBUGPRINT("Removed Camera from model poiter vector: " << this);
+
+						currentCamera = m_cameras[0];
+						delete(camera);
 					}
 				}
-				delete(camera);
+				ImGui::SameLine();
 			}
+			if (ImGui::Button("Reset Transform")) {
+				camera->position = glm::vec3(0.0f, 0.0f, -5.0f);
+			}
+
 			ImGui::TreePop();
 		}
 	}
@@ -589,18 +576,20 @@ void RenderingInit() {
 	// Turns out depth buffer wont work when its not enabled :>
 	glEnable(GL_DEPTH_TEST);
 
+	glClearColor(defaultClearColor.r, defaultClearColor.g, defaultClearColor.b, 1.0f);
+
 	// Setup resize callback so were always up to date with render resolution
 	glfwSetWindowSizeCallback(glfwGetCurrentContext(), RenderedWindowResizeCallback);
 
-	defaultShader = new Shader("Default", "res/shaders/default.vert", "res/shaders/default.frag");
+	currentShader = defaultShader = new Shader("Default", "res/shaders/default.vert", "res/shaders/default.frag");
 	normalDebugShader = new Shader("Normal Debug", "res/shaders/default.vert", "res/shaders/normalDebug.frag");
 	positionDebugShader = new Shader("Position Debug", "res/shaders/default.vert", "res/shaders/positionDebug.frag");
-
-	currentShader = defaultShader;
 
 	shaderManager = new ShaderManager;
 
 	modelmanager = new ModelManager;
+
+	Camera::GetCameraVector().reserve(4);
 	cameraManager = new CameraManager;
 
 	// Chack for debug flags from GLFW and enable debug in OpenGL if needed
@@ -628,28 +617,25 @@ void RenderingTerminate() {
 	delete(cameraManager);
 }
 
-void Render() {
-	// Run render prepass
+void CreateCamera(std::string name, bool enabled) {
+	cameraManager->CreateCamera(name, enabled);
+}
 
+void Render() {
 	// Bind the render buffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Clear color and depth buffer
-	glClearColor(defaultClearColor.r, defaultClearColor.g, defaultClearColor.b, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Set rendering resolution
 	glViewport(0, 0, renderWidth, renderHeight);
 
-	currentShader->BindShader();
+	if(currentShader) currentShader->BindShader();
+	
+	if(currentCamera) currentCamera->SendDataToShader();
 
 	// Render data form all instances of Model if enabled
-	for (Camera* camera : Camera::GetCamerasVector()) {
-		if (camera->isUsed) {
-			camera->SendDataToShader();
-		}
-	}
-
 	for (Model* model : Model::GetModelsVector()) {
 		if (model->isRendered) {
 			model->BindModel();
@@ -799,7 +785,7 @@ static void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, 
 }
 
 // Set render resolution to window resolusion when the size changes
-void RenderedWindowResizeCallback(GLFWwindow* window, int width, int height) {
+static void RenderedWindowResizeCallback(GLFWwindow* window, int width, int height) {
 	renderWidth = width;
 	renderHeight = height;
 

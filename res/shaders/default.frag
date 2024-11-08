@@ -8,9 +8,7 @@ in vec4 Normal;
 in vec2 TextureCoordinate;
 
 void main() {
-	vec3 lightPos = vec3(0.0, 1.0, 0.0);
-
-	vec3 lightDir = normalize(lightPos - Position.xyz);  
+	vec3 lightDir = normalize(vec3(1, 1, 0));  
 
 	float diff = max(dot(Normal.xyz, lightDir), 0.2);
 

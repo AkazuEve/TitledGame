@@ -181,6 +181,8 @@ public:
 	ModelManager();
 	~ModelManager();
 
+	void CreateModel(std::string name, std::string modelPath, std::string texturePath, GLenum indexFormat);
+
 	void OnUIRender() override;
 
 private:
@@ -192,13 +194,13 @@ class Camera {
 public:
 	// Create camera instance with name
 	Camera(std::string name, bool enabled);
-	~Camera();
+	~Camera() = default;
 	Camera(const Camera&) = delete;
 	
 	// Sends the camera matrix to shader uniform
 	void SendDataToShader();
 
-	static std::vector<Camera*>& GetCamerasVector() { return m_cameras; }
+	static std::vector<Camera*>& GetCameraVector() { return m_camers; }
 
 public:
 	glm::vec3 position{ 0.0f, 0.0f, -5.0f };
@@ -214,7 +216,7 @@ private:
 	glm::mat4 view{ 1.0f };
 	glm::mat4 projection{ 1.0f };
 
-	static std::vector<Camera*> m_cameras;
+	static std::vector<Camera*> m_camers;
 };
 
 class CameraManager : UIElement {
@@ -223,11 +225,11 @@ public:
 
 	~CameraManager();
 
-	void OnUIRender() override;
+	void CreateCamera(std::string name, bool enabled);
 
+	void OnUIRender() override;
 private:
-	std::vector<Camera*>& m_cameras = Camera::GetCamerasVector();
-	Camera* m_currentCamera = nullptr;
+	std::vector<Camera*>& m_cameras = Camera::GetCameraVector();
 };
 
 // Initializes all rendering stuff including a basic shader and render buffer
@@ -235,6 +237,8 @@ void RenderingInit();
 
 // Frees all memory and deletes all OpenGL objects
 void RenderingTerminate();
+
+void CreateCamera(std::string name, bool enabled);
 
 //Render all data stored in mesh classes.
 //Requires an existing opengl rendering context.
