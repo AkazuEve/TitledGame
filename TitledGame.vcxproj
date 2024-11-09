@@ -46,12 +46,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\Intermedietes\</IntDir>
     <IncludePath>C:\Users\Eve\source\repos\TitledGame\ext\precompiled\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Eve\source\repos\TitledGame\x64\Debug\;C:\Users\Eve\source\repos\TitledGame\ext\precompiled\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\Users\Eve\source\repos\TitledGame\ext\precompiled\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\Intermedietes\</IntDir>
     <IncludePath>C:\Users\Eve\source\repos\TitledGame\ext\precompiled\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Eve\source\repos\TitledGame\x64\Debug\;C:\Users\Eve\source\repos\TitledGame\ext\precompiled\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\Users\Eve\source\repos\TitledGame\ext\precompiled\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -66,7 +66,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;User32.lib;gdi32.lib;NamedLiblary.lib;Shell32.lib</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;User32.lib;gdi32.lib;Shell32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
@@ -103,6 +103,13 @@
     <ClCompile Include="ext\source\imgui\imgui_tables.cpp" />
     <ClCompile Include="ext\source\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\modules\rendering\Camera.cpp" />
+    <ClCompile Include="src\modules\rendering\Mesh.cpp" />
+    <ClCompile Include="src\modules\rendering\Model.cpp" />
+    <ClCompile Include="src\modules\rendering\Rendering.cpp" />
+    <ClCompile Include="src\modules\rendering\Shader.cpp" />
+    <ClCompile Include="src\modules\rendering\Texture.cpp" />
+    <ClCompile Include="src\modules\resources\ResourceManager.cpp" />
     <ClCompile Include="src\modules\UI.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -119,6 +126,14 @@
     <ClInclude Include="ext\source\imgui\imstb_truetype.h" />
     <ClInclude Include="ext\source\stb\stbi.h" />
     <ClInclude Include="src\modules\Debug.hpp" />
+    <ClInclude Include="src\modules\rendering\Camera.hpp" />
+    <ClInclude Include="src\modules\rendering\Mesh.hpp" />
+    <ClInclude Include="src\modules\rendering\Model.hpp" />
+    <ClInclude Include="src\modules\rendering\Rendering.hpp" />
+    <ClInclude Include="src\modules\rendering\Shader.hpp" />
+    <ClInclude Include="src\modules\rendering\Structs.hpp" />
+    <ClInclude Include="src\modules\rendering\Texture.hpp" />
+    <ClInclude Include="src\modules\resources\ResourceManager.hpp" />
     <ClInclude Include="src\modules\UI.hpp" />
     <ClInclude Include="src\modules\Window.hpp" />
   </ItemGroup>

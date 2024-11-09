@@ -9,5 +9,4 @@
 
 #else
 	#define DEBUGPRINT(x)
-
 #endif
