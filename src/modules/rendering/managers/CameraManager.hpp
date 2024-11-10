@@ -13,11 +13,12 @@ public:
 	CameraManager();
 	~CameraManager();
 
-	void CreateCamera(std::string name, bool enabled);
+	void CreateCamera(std::string name);
 
-	void SetCurrentCameraPosition(glm::vec3 position);
+	static Camera* GetCurrentCamera();
 
 	void OnUIRender() override;
 private:
-	std::vector<Camera*>& m_cameras = Camera::GetCameraVector();
+	static Camera* m_currentCamera;
+	std::vector<Camera*> m_cameras{};
 };

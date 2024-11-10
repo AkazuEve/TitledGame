@@ -1,9 +1,5 @@
 #include "Rendering.hpp"
 
-#pragma region PREDEF
-static void APIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char* message, const void* userParam);
-#pragma endregion
-
 #pragma region Const Variables
 static std::vector<GLfloat> quadVertices ={
 //     COORDINATES     / Texture cordinates
@@ -24,16 +20,9 @@ static std::vector<GLushort> quadIndices = {
 #pragma region Variables
 
 // Store them as pointers cause they have to be created after initialization of OpenGL
-Shader* defaultShader = nullptr;
-Shader* normalDebugShader = nullptr;
-Shader* positionDebugShader = nullptr;
-
-Shader* currentShader = nullptr;
-Camera* currentCamera = nullptr;
-
 ShaderManager* shaderManager = nullptr;
-CameraManager* cameraManager = nullptr;
 ModelManager* modelmanager = nullptr;
+CameraManager* cameraManager = nullptr;
 
 // Default clear color
 glm::vec3 defaultClearColor = { 0.2f, 0.2f, 0.6f };
@@ -54,18 +43,13 @@ void Rendering::Init() {
 
 	glClearColor(defaultClearColor.r, defaultClearColor.g, defaultClearColor.b, 1.0f);
 
-	currentShader = defaultShader = new Shader("Default", "res/shaders/default.vert", "res/shaders/default.frag");
-	normalDebugShader = new Shader("Normal Debug", "res/shaders/default.vert", "res/shaders/normalDebug.frag");
-	positionDebugShader = new Shader("Position Debug", "res/shaders/default.vert", "res/shaders/positionDebug.frag");
-
-	Shader::GetShadersVector().reserve(5);
 	shaderManager = new ShaderManager;
-
-	Model::GetModelsVector().reserve(10);
 	modelmanager = new ModelManager;
-
-	Camera::GetCameraVector().reserve(4);
 	cameraManager = new CameraManager;
+
+	shaderManager->CreateShader("Position Debug", "res/shaders/default.vert", "res/shaders/positionDebug.frag");
+	shaderManager->CreateShader("Normal Debug", "res/shaders/default.vert", "res/shaders/normalDebug.frag");
+	shaderManager->CreateShader("Default", "res/shaders/default.vert", "res/shaders/default.frag");
 
 	// Chack for debug flags from GLFW and enable debug in OpenGL if needed
 	GLint flags = 0;
@@ -81,17 +65,13 @@ void Rendering::Init() {
 void Rendering::Terminate() {
 	UI::ImGuiTerminate();
 
-	delete(defaultShader);
-	delete(normalDebugShader);
-	delete(positionDebugShader);
-
 	delete(shaderManager);
 	delete(modelmanager);
 	delete(cameraManager);
 }
 
-CameraManager* Rendering::GetGameraManager() { return cameraManager; }
 ModelManager* Rendering::GetModelManager() { return modelmanager; }
+CameraManager* Rendering::GetCameraManager() { return cameraManager; }
 
 void Rendering::Render() {
 	// Bind the render buffer
@@ -103,15 +83,14 @@ void Rendering::Render() {
 	// Set rendering resolution
 	glViewport(0, 0, renderWidth, renderHeight);
 
-	if(currentShader) currentShader->BindShader();
-	
-	if(currentCamera) currentCamera->SendDataToShader();
+	ShaderManager::GetCurrentShader()->BindShader();
+	CameraManager::GetCurrentCamera()->SendDataToShader();
 
 	// Render data form all instances of Model if enabled
-	for (Model* model : Model::GetModelsVector()) {
+	for (Model* model : ModelManager::GetModelPointerVector()) {
 		if (model->isRendered) {
 			model->BindModel();
-			glDrawElements(GL_TRIANGLES, model->GetIndexBufferSize(), model->GetIndexBufferFormat(), 0);
+			glDrawElements(GL_TRIANGLES, (GLsizei)model->GetIndexBufferSize(), GL_UNSIGNED_INT, 0);
 		}
 	}
 

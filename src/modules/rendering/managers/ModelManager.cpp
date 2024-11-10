@@ -1,5 +1,9 @@
 #include "ModelManager.hpp"
 
+#include "../../resources/ResourceManager.hpp"
+
+std::vector<Model*> ModelManager::m_models{};
+
 ModelManager::ModelManager() {
 }
 
@@ -9,14 +13,46 @@ ModelManager::~ModelManager() {
 	}
 }
 
-void ModelManager::CreateModel(std::string name, std::string modelPath, std::string texturePath, GLenum indexFormat) {
-	Model* tmpPtr = new Model;
+Model* ModelManager::CreateModel(std::string name, std::string modelPath, std::string texturePath) {
+	Model* model = new Model;
 
-	MeshData data = LoadModelFromPLYFile(modelPath);
+	MeshData data = ResourceManager::LoadPly(modelPath);
 
-	tmpPtr->AddMesh(name, data, indexFormat);
-	tmpPtr->AddTexture(GL_TEXTURE0, texturePath);
+	model->AddMesh(name, data);
+	model->AddTexture(GL_TEXTURE0, texturePath);
+
+	m_models.push_back(model);
+
+	return model;
 }
+
+Model* ModelManager::CreateModel(std::string modelPath, std::string texturePath) {
+	Model* model = new Model;
+
+	MeshData data = ResourceManager::LoadPly(modelPath);
+
+	char* name = (char*)malloc(5);
+
+	if (name) {
+		name[0] = rand() % 65 + 25;
+		name[1] = rand() % 65 + 25;
+		name[2] = rand() % 65 + 25;
+		name[3] = rand() % 65 + 25;
+		name[4] = 0;
+
+		model->AddMesh(name, data);
+
+		free(name);
+	}
+
+	model->AddTexture(GL_TEXTURE0, texturePath);
+
+	m_models.push_back(model);
+
+	return model;
+}
+
+std::vector<Model*>& ModelManager::GetModelPointerVector() { return m_models; }
 
 void ModelManager::OnUIRender() {
 	ImGui::Begin("Model Manager");
@@ -31,7 +67,7 @@ void ModelManager::OnUIRender() {
 		std::string texturePath = std::string("res/textures/") + textureName + std::string(".png");
 		std::string modelPath = std::string("res/models/") + modelName + std::string(".ply");
 
-		CreateModel(name, modelPath, texturePath, GL_UNSIGNED_SHORT);
+		CreateModel(name, modelPath, texturePath);
 	}
 
 	ImGui::Separator();
@@ -46,7 +82,15 @@ void ModelManager::OnUIRender() {
 
 				if (ImGui::Button("Remove")) {
 					DEBUGPRINT("Removed Model from Object manager list: " << model);
-					delete(model);
+
+
+					// Remove this pointer from models vector
+					std::vector<Model*>::iterator position = std::find(m_models.begin(), m_models.end(), model);
+					if (position != m_models.end()) {
+						m_models.erase(position);
+						delete(model);
+						DEBUGPRINT("Removed Model from model list: " << model);
+					}
 				}
 				ImGui::SameLine();
 				if (ImGui::Button("Reset Transform")) {

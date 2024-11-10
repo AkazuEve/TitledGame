@@ -1,9 +1,8 @@
 #include "Shader.hpp"
 
-std::vector<Shader*> Shader::m_shaders;
+#include "../../resources/ResourceManager.hpp"
 
 Shader::Shader(std::string name, std::string vertexFile, std::string fragmentFile) {
-	m_shaders.push_back(this);
 	m_shaderProgram = glCreateProgram();
 
 	this->name = name;
@@ -41,13 +40,6 @@ Shader::Shader(std::string name, std::string vertexFile, std::string fragmentFil
 }
 
 Shader::~Shader() {
-	// Remove this pointer from models vector
-	std::vector<Shader*>::iterator position = std::find(m_shaders.begin(), m_shaders.end(), this);
-	if (position != m_shaders.end()) {
-		m_shaders.erase(position);
-		DEBUGPRINT("Removed Shader from shader list: " << this);
-	}
-
 	DEBUGPRINT("Destroyed shader: " << m_shaderProgram);
 	glDeleteProgram(m_shaderProgram);
 }
@@ -91,7 +83,7 @@ bool Shader::CompileShader(GLuint& shader, std::string& file, GLint shaderType) 
 	// Read source from file and compile
 	std::string shaderSource;
 	const char* vertexSourceCharPtr;
-	shaderSource = LoadShaderFile(file);
+	shaderSource = ResourceManager::LoadShader(file);
 	vertexSourceCharPtr = shaderSource.c_str();
 	glShaderSource(shader, 1, &vertexSourceCharPtr, NULL);
 	glCompileShader(shader);

@@ -78,10 +78,10 @@
     <ClCompile Include="src\modules\rendering\managers\ModelManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\modules\Debug.cpp">
+    <ClCompile Include="src\modules\debug\Debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\modules\Window.cpp">
+    <ClCompile Include="src\modules\window\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -122,13 +122,13 @@
     <ClInclude Include="ext\source\stb\stbi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\Window.hpp">
+    <ClInclude Include="src\modules\window\Window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\modules\rendering\UI\ImGuiUI.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\modules\Debug.hpp">
+    <ClInclude Include="src\modules\debug\Debug.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\modules\rendering\Rendering.hpp">

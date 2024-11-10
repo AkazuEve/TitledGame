@@ -3,8 +3,7 @@
 // Standard lib
 #include <vector>
 
-
-#define DEBUGPRINT(x) std::cout << x << std::endl;
+#include "../debug/Debug.hpp"
 
 // Glad for OpenGL functions
 #include "../../ext/source/glad/glad.h"
@@ -26,8 +25,8 @@ namespace Rendering {
 	// Frees all memory and deletes all OpenGL objects
 	void Terminate();
 
-	CameraManager* GetGameraManager();
 	ModelManager* GetModelManager();
+	CameraManager* GetCameraManager();
 
 	//Render all data stored in mesh classes.
 	//Requires an existing opengl rendering context.

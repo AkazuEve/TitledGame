@@ -11,8 +11,13 @@ public:
 	ShaderManager();
 	~ShaderManager();
 
+	Shader* CreateShader(std::string name, std::string vertexFile, std::string fragmentFile);
+
+	static Shader* GetCurrentShader();
+
 	void OnUIRender() override;
 
 private:
-	std::vector<Shader*>& m_shaders = Shader::GetShadersVector();
+	static Shader* m_currentShader;
+	std::vector<Shader*> m_shaders{};
 };

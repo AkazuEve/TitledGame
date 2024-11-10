@@ -1,15 +1,11 @@
 #include "Camera.hpp"
 
+#include "../managers/ShaderManager.hpp"
+
 extern unsigned int renderWidth, renderHeight;
-extern Shader* currentShader;
 
-std::vector<Camera*> Camera::m_camers;
-
-Camera::Camera(std::string name, bool enabled) {
-	this->name = name;
-	this->isUsed = enabled;
-
-	DEBUGPRINT("Added " << name << " Camera to camera pointer list: " << this);
+Camera::Camera(std::string name): name(name) {
+	DEBUGPRINT("Created camera: " << this);
 }
 
 void Camera::SendDataToShader() {
@@ -23,5 +19,5 @@ void Camera::SendDataToShader() {
 
 	static glm::mat4 result{ 0.0f };
 	result = projection * view;
-	glUniformMatrix4fv(currentShader->GetCameraUniformLocation(), 1, GL_FALSE, glm::value_ptr(result));
+	glUniformMatrix4fv(ShaderManager::GetCurrentShader()->GetCameraUniformLocation(), 1, GL_FALSE, glm::value_ptr(result));
 }

@@ -12,10 +12,13 @@ public:
 	ModelManager();
 	~ModelManager();
 
-	void CreateModel(std::string name, std::string modelPath, std::string texturePath, GLenum indexFormat);
+	Model* CreateModel(std::string name, std::string modelPath, std::string texturePath);
+	Model* CreateModel(std::string modelPath, std::string texturePath);
+
+	static std::vector<Model*>& GetModelPointerVector();
 
 	void OnUIRender() override;
 
 private:
-	std::vector<Model*>& m_models = Model::GetModelsVector();
+	static std::vector<Model*> m_models;
 };

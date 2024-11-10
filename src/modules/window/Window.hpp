@@ -3,7 +3,7 @@
 // Standard lib
 #include <vector>
 
-#include "Debug.hpp"
+#include "../debug/Debug.hpp"
 
 #include <GLFW/glfw3.h>
 

@@ -22,16 +22,13 @@ public:
 	~Model();
 	Model(const Model&) = delete;
 
-	void AddMesh(std::string name, const MeshData& data, GLenum indexFormat);
+	void AddMesh(std::string name, const MeshData& data);
 
 	void AddTexture(GLenum textureSlot, std::string textuprePath);
 
 	void BindModel();
 
-	GLushort GetIndexBufferSize() { return m_mesh.GetIndexBufferSize(); }
-	GLenum GetIndexBufferFormat() { return m_mesh.GetIndexBufferFormat(); }
-
-	static std::vector<Model*>& GetModelsVector() { return m_models; }
+	size_t GetIndexBufferSize() { return m_mesh.GetIndexBufferSize(); }
 
 public:
 	glm::vec3 position{ 0.0f };
@@ -50,6 +47,4 @@ private:
 	glm::mat4 m_modelNormalMatrix{ 1.0 };
 
 	static glm::mat4 sm_identityMatrix;
-
-	static std::vector<Model*> m_models;
 };

@@ -38,6 +38,8 @@ Window::Window(int width, int height, const char* title) {
 
 		glfwSetWindowCenter(m_windowPtr);
 
+        glfwSwapInterval(1);
+
 		// Setup resize callback so were always up to date with render resolution
 		glfwSetWindowSizeCallback(glfwGetCurrentContext(), RenderedWindowResizeCallback);
 

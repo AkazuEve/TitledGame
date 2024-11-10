@@ -1,5 +1,7 @@
 #include "ImGuiUI.hpp"
 
+std::vector <UIElement*> UIElement::elements;
+
 UIElement::UIElement() {
 		elements.push_back(this);
 		DEBUGPRINT("Created UIElement: " << this);
@@ -12,8 +14,6 @@ UIElement::~UIElement() {
 		DEBUGPRINT("Removed UIElement from list: " << this);
 	}
 }
-
-std::vector <UIElement*> UIElement::elements;
 
 namespace UI {
 	// Creates ImGui context and sets up for OpenGL3 and GLFW

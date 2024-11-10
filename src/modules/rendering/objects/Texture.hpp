@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "../../Debug.hpp"
+#include "../../debug/Debug.hpp"
 
 // Glad for OpenGL functions
 #include "../../ext/source/glad/glad.h"

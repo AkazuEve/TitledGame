@@ -9,7 +9,5 @@
 
 struct MeshData {
 	std::vector<Vertex> vertices;
-	std::vector<GLushort> indices;
-
-	GLenum indexFormat{ 0 };
+	std::vector<GLuint> indices;
 };

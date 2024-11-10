@@ -18,10 +18,10 @@ Mesh::~Mesh() {
 	DEBUGPRINT("Destroyed mesh: " << m_vertexArray);
 }
 
-void Mesh::LoadMeshData(const MeshData& data, GLenum indexFormat) {
+void Mesh::LoadMeshData(const MeshData& data) {
 	// Send data to buffers
 	glNamedBufferStorage(m_vertexBuffer, data.vertices.size() * sizeof(Vertex), data.vertices.data(), 0);
-	glNamedBufferStorage(m_indexBuffer, data.indices.size() * sizeof(GLshort), data.indices.data(), 0);
+	glNamedBufferStorage(m_indexBuffer, data.indices.size() * sizeof(GLuint), data.indices.data(), 0);
 
 	glVertexArrayVertexBuffer(m_vertexArray, 0, m_vertexBuffer, 0, sizeof(Vertex));
 	glVertexArrayElementBuffer(m_vertexArray, m_indexBuffer);
@@ -40,7 +40,6 @@ void Mesh::LoadMeshData(const MeshData& data, GLenum indexFormat) {
 	glVertexArrayAttribBinding(m_vertexArray, 2, 0);
 
 	m_indexBufferSize = data.indices.size();
-	m_indexBufferFormat = indexFormat;
 }
 
 void Mesh::BindMesh() {

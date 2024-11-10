@@ -1,11 +1,10 @@
 #include "CameraManager.hpp"
 
-extern Camera* currentCamera;
+Camera* CameraManager::m_currentCamera = nullptr;
 
 // Creates a defaualt camera and sets it as active
 CameraManager::CameraManager() {
-	m_cameras.push_back(new Camera("Default", true));
-	currentCamera = m_cameras[0];
+	CreateCamera("Default");
 }
 
 // Deallocates all memory from camera vectors
@@ -15,13 +14,13 @@ CameraManager::~CameraManager() {
 	}
 }
 
-void CameraManager::CreateCamera(std::string name, bool enabled) {
-	m_cameras.push_back(new Camera(name, enabled));
+void CameraManager::CreateCamera(std::string name) {
+	Camera* camera = new Camera(name);
+	m_cameras.push_back(camera);
+	m_currentCamera = camera;
 }
 
-void CameraManager::SetCurrentCameraPosition(glm::vec3 position) {
-	currentCamera->position = position;
-}
+Camera* CameraManager::GetCurrentCamera() { return m_currentCamera; }
 
 void CameraManager::OnUIRender() {
 	ImGui::Begin("Camera Manager");
@@ -31,13 +30,12 @@ void CameraManager::OnUIRender() {
 	ImGui::InputText("New Camera Name", newCameraName, 20);
 
 	if (ImGui::Button("Create new camera")) {
-		m_cameras.push_back(new Camera(newCameraName, true));
+		CreateCamera(newCameraName);
 	}
 
 	ImGui::Separator();
 
 	for (Camera* camera : m_cameras) {
-
 		if (ImGui::TreeNode(camera->name.c_str())) {
 			ImGui::DragFloat3("Position", (float*)&camera->position, 0.05f, -10, 10);
 			ImGui::DragFloat("Fov", (float*)&camera->fov, 0.01f, 20.0f, 180.0f);
@@ -45,7 +43,7 @@ void CameraManager::OnUIRender() {
 			ImGui::DragFloat("Far Plane", (float*)&camera->farPlane, 0.01f, 20.0f, 100.0f);
 
 			if (ImGui::Button("Use")) {
-				currentCamera = camera;
+				m_currentCamera = camera;
 			}
 
 			ImGui::SameLine();
@@ -58,7 +56,7 @@ void CameraManager::OnUIRender() {
 						m_cameras.erase(position);
 						DEBUGPRINT("Removed Camera from model poiter vector: " << this);
 
-						currentCamera = m_cameras[0];
+						m_currentCamera = m_cameras[0];
 						delete(camera);
 					}
 				}

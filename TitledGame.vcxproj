@@ -103,7 +103,7 @@
     <ClCompile Include="ext\source\imgui\imgui_tables.cpp" />
     <ClCompile Include="ext\source\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\modules\Debug.cpp" />
+    <ClCompile Include="src\modules\debug\Debug.cpp" />
     <ClCompile Include="src\modules\rendering\managers\CameraManager.cpp" />
     <ClCompile Include="src\modules\rendering\managers\ModelManager.cpp" />
     <ClCompile Include="src\modules\rendering\managers\ShaderManager.cpp" />
@@ -116,7 +116,7 @@
     <ClCompile Include="src\modules\rendering\structs\Vertex.cpp" />
     <ClCompile Include="src\modules\resources\ResourceManager.cpp" />
     <ClCompile Include="src\modules\rendering\UI\ImGuiIU.cpp" />
-    <ClCompile Include="src\modules\Window.cpp" />
+    <ClCompile Include="src\modules\window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ext\source\glad\glad.h" />
@@ -131,7 +131,7 @@
     <ClInclude Include="ext\source\imgui\imstb_textedit.h" />
     <ClInclude Include="ext\source\imgui\imstb_truetype.h" />
     <ClInclude Include="ext\source\stb\stbi.h" />
-    <ClInclude Include="src\modules\Debug.hpp" />
+    <ClInclude Include="src\modules\debug\Debug.hpp" />
     <ClInclude Include="src\modules\rendering\managers\CameraManager.hpp" />
     <ClInclude Include="src\modules\rendering\managers\ModelManager.hpp" />
     <ClInclude Include="src\modules\rendering\managers\ShaderManager.hpp" />
@@ -145,7 +145,7 @@
     <ClInclude Include="src\modules\rendering\structs\Vertex.hpp" />
     <ClInclude Include="src\modules\resources\ResourceManager.hpp" />
     <ClInclude Include="src\modules\rendering\UI\ImGuiUI.hpp" />
-    <ClInclude Include="src\modules\Window.hpp" />
+    <ClInclude Include="src\modules\window\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\default.frag" />

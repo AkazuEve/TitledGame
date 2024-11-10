@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "../../Debug.hpp"
+#include "../../debug/Debug.hpp"
 
 // Glad for OpenGL functions
 #include "../../ext/source/glad/glad.h"
@@ -29,8 +29,6 @@ public:
 	// Gets the underlying shader object
 	GLuint GetShaderObject() { return m_shaderProgram; }
 
-	static std::vector<Shader*>& GetShadersVector() { return m_shaders; }
-
 	GLuint GetModelUniformLocation() { return m_modelUniform; }
 	GLuint GetModelNormalUniformLocation() { return m_modelNormalUniform; }
 	GLuint GetCameraUniformLocation() { return m_cameraUniform; }
@@ -47,6 +45,4 @@ private:
 	GLuint m_modelUniform{ 0 }, m_modelNormalUniform{ 0 }, m_cameraUniform{ 0 };
 
 	std::string m_vertexFile{}, m_fragmentFile{};
-
-	static std::vector<Shader*> m_shaders;
 };
