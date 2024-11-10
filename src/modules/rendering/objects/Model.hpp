@@ -24,7 +24,7 @@ public:
 
 	void AddMesh(std::string name, const MeshData& data);
 
-	void AddTexture(GLenum textureSlot, std::string textuprePath);
+	void AddTexture(std::string textuprePath, GLenum textureSlot);
 
 	void BindModel();
 
@@ -45,6 +45,10 @@ private:
 
 	glm::mat4 m_modelMatrix{ 1.0 };
 	glm::mat4 m_modelNormalMatrix{ 1.0 };
+
+	static glm::mat4 translationMatrix;
+	static glm::mat4 rotationMatrix;
+	static glm::mat4 scaleMatrix;
 
 	static glm::mat4 sm_identityMatrix;
 };

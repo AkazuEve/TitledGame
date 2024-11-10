@@ -42,6 +42,12 @@ void CameraManager::OnUIRender() {
 			ImGui::DragFloat("Near Plane", (float*)&camera->nearPlane, 0.01f, 0.01f, 100.0f);
 			ImGui::DragFloat("Far Plane", (float*)&camera->farPlane, 0.01f, 20.0f, 100.0f);
 
+			ImGui::Checkbox("First click", &camera->firstClick);
+
+			ImGui::SliderFloat("Speed", &camera->speed, 1.0f, 50.0f);
+			ImGui::SliderFloat("Sensitivity", &camera->sensitivity, 10.0f, 500.0f);
+			ImGui::DragFloat3("Orientation", (float*)&camera->orientation, 0.05f, -10, 10);
+
 			if (ImGui::Button("Use")) {
 				m_currentCamera = camera;
 			}
@@ -64,6 +70,7 @@ void CameraManager::OnUIRender() {
 			}
 			if (ImGui::Button("Reset Transform")) {
 				camera->position = glm::vec3(0.0f, 0.0f, -5.0f);
+				camera->orientation = glm::vec3(0.0f, 0.0f, 1.0f);
 			}
 
 			ImGui::TreePop();

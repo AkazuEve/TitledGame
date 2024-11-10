@@ -84,6 +84,8 @@ void Rendering::Render() {
 	glViewport(0, 0, renderWidth, renderHeight);
 
 	ShaderManager::GetCurrentShader()->BindShader();
+
+	CameraManager::GetCurrentCamera()->Inputs();
 	CameraManager::GetCurrentCamera()->SendDataToShader();
 
 	// Render data form all instances of Model if enabled

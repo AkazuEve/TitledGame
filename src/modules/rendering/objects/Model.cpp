@@ -4,6 +4,10 @@
 
 glm::mat4 Model::sm_identityMatrix{ 1.0f };
 
+glm::mat4 Model::translationMatrix{ 1.0f };
+glm::mat4 Model::rotationMatrix{ 1.0f };
+glm::mat4 Model::scaleMatrix{ 1.0f };
+
 Model::Model() {
 	// Push created model pointer to vector
 	DEBUGPRINT("Created model: " << this);
@@ -21,21 +25,17 @@ void Model::AddMesh(std::string name, const MeshData& data) {
 	m_mesh.LoadMeshData(data);
 }
 
-void Model::AddTexture(GLenum textureSlot, std::string textuprePath) {
+void Model::AddTexture(std::string textuprePath, GLenum textureSlot) {
 	// Create new texture
-	Texture* tmp = new Texture();
+	Texture* texture = new Texture();
 
 	// Setup data and push to texture vector
-	tmp->LoadTextureData(textuprePath, textureSlot);
-	m_textures.push_back(tmp);
+	texture->LoadTextureData(textuprePath, textureSlot);
+	m_textures.push_back(texture);
 }
 
 void Model::BindModel() {
 	// Recalculate new matrix
-	static glm::mat4 translationMatrix{ 1.0f };
-	static glm::mat4 rotationMatrix{ 1.0f };
-	static glm::mat4 scaleMatrix{ 1.0f };
-
 	translationMatrix = glm::translate(sm_identityMatrix, position);
 
 	rotationMatrix = glm::rotate(sm_identityMatrix, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));

@@ -10,19 +10,21 @@
 #ifdef _DEBUG
 	size_t allocatedMemory{ 0 };
 
-	void* __CRTDECL operator new(size_t size) {
-		allocatedMemory += size;
-		DEBUGPRINT("Allocation: " << size << " Usage: " << allocatedMemory);
+	void* operator new (size_t size) {
+		{
+			allocatedMemory += size;
+			std::cout << " Allocation: " << size << " Usage: " << allocatedMemory << "\n";
 
-		void* p = malloc(size);
-		if(p)
-			return p;
-		throw std::runtime_error("Failed to allocate");
+			void* p = malloc(size);
+			if (p)
+				return p;
+			throw std::runtime_error("Failed to allocate");
+		}
 	}
 
-	void operator delete(void* memory, size_t size) {
+	inline void operator delete(void* memory, size_t size) {
 		allocatedMemory -= size;
-		DEBUGPRINT("Deallocation: " << size << " Usage: " << allocatedMemory);
+		std::cout << "Deallocation: " << size << " Usage: " << allocatedMemory << "\n";
 
 		free(memory);
 	}
@@ -42,12 +44,6 @@ int main() {
 
 	Window mainWindow(1440, 810, "Game Window"); 
 	Rendering::Init();
-
-	for (unsigned int i{ 0 }; i < 4000; i++) {
-		Model* object = Rendering::GetModelManager()->CreateModel("res/models/untitled.ply", "res/textures/brick.png");
-		object->position = glm::vec3(getRandomFloat(10) - 5, getRandomFloat(10) - 5, getRandomFloat(10) - 5);
-		object->rotation = glm::vec3(getRandomFloat(180), getRandomFloat(180), getRandomFloat(180));
-	}
 
 	while (mainWindow.ShouldRun()) {
 		Rendering::Render();

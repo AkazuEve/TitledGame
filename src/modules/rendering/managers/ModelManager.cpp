@@ -19,7 +19,7 @@ Model* ModelManager::CreateModel(std::string name, std::string modelPath, std::s
 	MeshData data = ResourceManager::LoadPly(modelPath);
 
 	model->AddMesh(name, data);
-	model->AddTexture(GL_TEXTURE0, texturePath);
+	model->AddTexture(texturePath, GL_TEXTURE0);
 
 	m_models.push_back(model);
 
@@ -45,7 +45,7 @@ Model* ModelManager::CreateModel(std::string modelPath, std::string texturePath)
 		free(name);
 	}
 
-	model->AddTexture(GL_TEXTURE0, texturePath);
+	model->AddTexture(texturePath, GL_TEXTURE0);
 
 	m_models.push_back(model);
 
