@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iostream>
 
-#include "../rendering/Structs.hpp"
+#include "../rendering/structs/MeshData.hpp"
 
 #include "../Debug.hpp"
 

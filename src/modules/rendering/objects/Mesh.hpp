@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../Debug.hpp"
+#include "../../Debug.hpp"
 
 // Glad for OpenGL functions
 #include "../../ext/source/glad/glad.h"
 
-#include "Structs.hpp"
+#include "../structs/MeshData.hpp"
 
 class Mesh {
 public:

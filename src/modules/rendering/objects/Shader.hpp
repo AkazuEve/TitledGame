@@ -3,12 +3,12 @@
 #include <vector>
 #include <string>
 
-#include "../Debug.hpp"
+#include "../../Debug.hpp"
 
 // Glad for OpenGL functions
 #include "../../ext/source/glad/glad.h"
 
-#include "../resources/ResourceManager.hpp"
+#include "../../resources/ResourceManager.hpp"
 
 // Creates a shader that can be used for rendering objects
 class Shader {

@@ -103,14 +103,20 @@
     <ClCompile Include="ext\source\imgui\imgui_tables.cpp" />
     <ClCompile Include="ext\source\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\modules\rendering\Camera.cpp" />
-    <ClCompile Include="src\modules\rendering\Mesh.cpp" />
-    <ClCompile Include="src\modules\rendering\Model.cpp" />
+    <ClCompile Include="src\modules\Debug.cpp" />
+    <ClCompile Include="src\modules\rendering\managers\CameraManager.cpp" />
+    <ClCompile Include="src\modules\rendering\managers\ModelManager.cpp" />
+    <ClCompile Include="src\modules\rendering\managers\ShaderManager.cpp" />
+    <ClCompile Include="src\modules\rendering\objects\Camera.cpp" />
+    <ClCompile Include="src\modules\rendering\objects\Mesh.cpp" />
+    <ClCompile Include="src\modules\rendering\objects\Model.cpp" />
     <ClCompile Include="src\modules\rendering\Rendering.cpp" />
-    <ClCompile Include="src\modules\rendering\Shader.cpp" />
-    <ClCompile Include="src\modules\rendering\Texture.cpp" />
+    <ClCompile Include="src\modules\rendering\objects\Shader.cpp" />
+    <ClCompile Include="src\modules\rendering\objects\Texture.cpp" />
+    <ClCompile Include="src\modules\rendering\structs\Vertex.cpp" />
     <ClCompile Include="src\modules\resources\ResourceManager.cpp" />
-    <ClCompile Include="src\modules\UI.cpp" />
+    <ClCompile Include="src\modules\rendering\UI\ImGuiIU.cpp" />
+    <ClCompile Include="src\modules\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ext\source\glad\glad.h" />
@@ -126,15 +132,19 @@
     <ClInclude Include="ext\source\imgui\imstb_truetype.h" />
     <ClInclude Include="ext\source\stb\stbi.h" />
     <ClInclude Include="src\modules\Debug.hpp" />
-    <ClInclude Include="src\modules\rendering\Camera.hpp" />
-    <ClInclude Include="src\modules\rendering\Mesh.hpp" />
-    <ClInclude Include="src\modules\rendering\Model.hpp" />
+    <ClInclude Include="src\modules\rendering\managers\CameraManager.hpp" />
+    <ClInclude Include="src\modules\rendering\managers\ModelManager.hpp" />
+    <ClInclude Include="src\modules\rendering\managers\ShaderManager.hpp" />
+    <ClInclude Include="src\modules\rendering\objects\Camera.hpp" />
+    <ClInclude Include="src\modules\rendering\objects\Mesh.hpp" />
+    <ClInclude Include="src\modules\rendering\objects\Model.hpp" />
     <ClInclude Include="src\modules\rendering\Rendering.hpp" />
-    <ClInclude Include="src\modules\rendering\Shader.hpp" />
-    <ClInclude Include="src\modules\rendering\Structs.hpp" />
-    <ClInclude Include="src\modules\rendering\Texture.hpp" />
+    <ClInclude Include="src\modules\rendering\objects\Shader.hpp" />
+    <ClInclude Include="src\modules\rendering\structs\MeshData.hpp" />
+    <ClInclude Include="src\modules\rendering\objects\Texture.hpp" />
+    <ClInclude Include="src\modules\rendering\structs\Vertex.hpp" />
     <ClInclude Include="src\modules\resources\ResourceManager.hpp" />
-    <ClInclude Include="src\modules\UI.hpp" />
+    <ClInclude Include="src\modules\rendering\UI\ImGuiUI.hpp" />
     <ClInclude Include="src\modules\Window.hpp" />
   </ItemGroup>
   <ItemGroup>

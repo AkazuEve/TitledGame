@@ -3,7 +3,7 @@
 extern Shader* currentShader;
 
 glm::mat4 Model::sm_identityMatrix{ 1.0f };
-std::vector<Model*> Model::m_models;
+std::vector<Model*> Model::m_models{};
 
 Model::Model() {
 	// Push created model pointer to vector

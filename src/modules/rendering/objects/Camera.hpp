@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Debug.hpp"
+#include "../../Debug.hpp"
 
 #include <string>
 #include <vector>

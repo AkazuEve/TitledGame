@@ -1,5 +1,4 @@
-#include "UI.hpp"
-
+#include "ImGuiUI.hpp"
 
 UIElement::UIElement() {
 		elements.push_back(this);
@@ -14,7 +13,7 @@ UIElement::~UIElement() {
 	}
 }
 
-std::vector <UIElement*> UIElement::elements{};
+std::vector <UIElement*> UIElement::elements;
 
 namespace UI {
 	// Creates ImGui context and sets up for OpenGL3 and GLFW
@@ -23,7 +22,7 @@ namespace UI {
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
 
 		ImGui_ImplOpenGL3_Init(version);
