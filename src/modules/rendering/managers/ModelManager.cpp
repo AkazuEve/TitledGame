@@ -10,6 +10,7 @@ void ModelManager::SetupUI() {
 
 void ModelManager::FreeMemory() {
 	for (Model* model : m_models) {
+		DEBUGPRINT("Deleted model:" << model->name << ", " << model);
 		delete(model);
 	}
 }
@@ -17,12 +18,13 @@ void ModelManager::FreeMemory() {
 Model* ModelManager::CreateModel(std::string name, std::string modelPath, std::string texturePath) {
 	Model* model = new Model;
 
-	MeshData data = ResourceManager::LoadPly(modelPath);
-
-	model->AddMesh(name, data);
+	model->AddMesh(name, ResourceManager::LoadPly(modelPath));
 	model->AddTexture(texturePath, GL_TEXTURE0);
 
 	m_models.push_back(model);
+
+	Console::SendMessage("Deleted model", MESSAGE_TYPE::NOTIFICATION);
+	DEBUGPRINT("Created model:" << model->name << ", " << model);
 
 	return model;
 }
@@ -82,17 +84,15 @@ void ModelManager::RenderUI() {
 				ImGui::DragFloat3("Scale", (float*)&model->scale, 0.05f, 0, 5);
 
 				if (ImGui::Button("Remove")) {
-					DEBUGPRINT("Removed Model from Object manager list: " << model);
-
-
 					// Remove this pointer from models vector
 					std::vector<Model*>::iterator position = std::find(m_models.begin(), m_models.end(), model);
-					if (position != m_models.end()) {
-						m_models.erase(position);
-						delete(model);
-						DEBUGPRINT("Removed Model from model list: " << model);
-					}
+					m_models.erase(position);
+					delete(model);
+					Console::SendMessage("Deleted model from UI", MESSAGE_TYPE::NOTIFICATION);
+					DEBUGPRINT("Deleted model: " << model);
+
 				}
+
 				ImGui::SameLine();
 				if (ImGui::Button("Reset Transform")) {
 					model->position = glm::vec3(0.0f);

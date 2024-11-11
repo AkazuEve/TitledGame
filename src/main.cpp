@@ -6,9 +6,9 @@
 #include "modules/window/Window.hpp"
 
 #include "modules/resources/MemoryManager.hpp"
+#include "modules/debug/Console.hpp"
 
 #include <crtdbg.h>
-
 #include <thread>
 
 float getRandomFloat(int max) {
@@ -27,11 +27,16 @@ int main() {
 
 	MemoryManager::SetupUI();
 
+	Console::SetupUI();
+
 	ResourceManager::PreloadAllResources();
 
 	Rendering::Init();
 
+	Model* monkeModel = ModelManager::CreateModel("res/models/ps1character1.ply", "res/textures/texture.png");
+
 	while (mainWindow.ShouldRun()) {
+		monkeModel->rotation.y += 0.5f;
 		Rendering::Render();
 	}
 

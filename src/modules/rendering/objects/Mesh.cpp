@@ -5,8 +5,6 @@ Mesh::Mesh() {
 	glCreateVertexArrays(1, &m_vertexArray);
 	glCreateBuffers(1, &m_vertexBuffer);
 	glCreateBuffers(1, &m_indexBuffer);
-
-	DEBUGPRINT("Created mesh: " << m_vertexArray);
 }
 
 Mesh::~Mesh() {
@@ -14,8 +12,6 @@ Mesh::~Mesh() {
 	glDeleteBuffers(1, &m_vertexBuffer);
 	glDeleteBuffers(1, &m_indexBuffer);
 	glDeleteVertexArrays(1, &m_vertexArray);
-
-	DEBUGPRINT("Destroyed mesh: " << m_vertexArray);
 }
 
 void Mesh::LoadMeshData(const MeshData& data) {

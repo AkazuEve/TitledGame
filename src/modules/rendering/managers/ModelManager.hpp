@@ -7,6 +7,8 @@
 
 #include "../objects/Model.hpp"
 
+#include "../../debug/Console.hpp"
+
 class ModelManager {
 public:
 	ModelManager() = delete;

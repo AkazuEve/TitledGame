@@ -13,12 +13,9 @@ Texture::Texture() {
 	// Configures the way the texture repeats (if it does at all)
 	glTextureParameteri(m_texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTextureParameteri(m_texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	DEBUGPRINT("Created texture: " << m_texture);
 }
 
 Texture::~Texture() {
-	DEBUGPRINT("Destroyed texture: " << m_texture);
 	glDeleteTextures(1, &m_texture);
 }
 

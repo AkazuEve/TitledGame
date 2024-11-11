@@ -8,11 +8,6 @@ glm::mat4 Model::translationMatrix{ 1.0f };
 glm::mat4 Model::rotationMatrix{ 1.0f };
 glm::mat4 Model::scaleMatrix{ 1.0f };
 
-Model::Model() {
-	// Push created model pointer to vector
-	DEBUGPRINT("Created model: " << this);
-}
-
 Model::~Model() {
 	// Destroy all allocated textures
 	for (Texture* texture : m_textures) {

@@ -5,7 +5,6 @@
 extern unsigned int viewportRenderWidth, viewportRenderHeight;
 
 Camera::Camera(std::string name): name(name) {
-	DEBUGPRINT("Created camera: " << this);
 }
 
 void Camera::SendDataToShader() {

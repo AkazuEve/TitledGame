@@ -34,13 +34,10 @@ Shader::Shader(std::string name, std::string vertexFile, std::string fragmentFil
 		m_modelUniform = glGetUniformLocation(m_shaderProgram, "model");
 		m_modelNormalUniform = glGetUniformLocation(m_shaderProgram, "modelNormal");
 		m_cameraUniform = glGetUniformLocation(m_shaderProgram, "camera");
-
-		DEBUGPRINT("Created shader: " << m_shaderProgram);
 	}
 }
 
 Shader::~Shader() {
-	DEBUGPRINT("Destroyed shader: " << m_shaderProgram);
 	glDeleteProgram(m_shaderProgram);
 }
 

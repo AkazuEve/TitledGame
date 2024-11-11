@@ -8,6 +8,8 @@
 
 #include "../objects/Camera.hpp"
 
+#include "../../debug/Console.hpp"
+
 class CameraManager {
 public:
 	CameraManager() = delete;

@@ -11,7 +11,6 @@ size_t MemoryManager::allocationPerFrame{ 0 };
 inline void* operator new (size_t size) {
 	MemoryManager::totalAllocated += size;
 	MemoryManager::allocationCount++;
-	//DEBUGPRINT("Allocation: " << size << " Usage: " << MemoryManager::totalAllocated - MemoryManager::totalFreed);
 
 	void* p = malloc(size);
 	if (p)
@@ -22,7 +21,6 @@ inline void* operator new (size_t size) {
 
 inline void operator delete(void* memory, size_t size) {
 	MemoryManager::totalFreed += size;
-	//DEBUGPRINT("Deallocation: " << size << " Usage: " << MemoryManager::totalAllocated - MemoryManager::totalFreed);
 	free(memory);
 }
 

@@ -18,7 +18,7 @@
 // Model class contains mesh data and textures. After creation data gets rendered when calling Render()
 class Model {
 public:
-	Model();
+	Model() = default;
 	~Model();
 	Model(const Model&) = delete;
 

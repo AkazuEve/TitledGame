@@ -7,6 +7,9 @@ void CameraManager::CreateCamera(std::string name) {
 	Camera* camera = new Camera(name);
 	m_cameras.push_back(camera);
 	m_currentCamera = camera;
+	Console::SendMessage("Created camera", MESSAGE_TYPE::NOTIFICATION);
+	DEBUGPRINT("Created camera:" << camera->name << ", " << camera);
+
 }
 
 Camera* CameraManager::GetCurrentCamera() { return m_currentCamera; }
@@ -18,6 +21,8 @@ void CameraManager::SetupUI() {
 
 void CameraManager::FreeMemory() {
 	for (Camera* camera : m_cameras) {
+		Console::SendMessage("Deleted camera", MESSAGE_TYPE::NOTIFICATION);
+		DEBUGPRINT("Deleted camera:" << camera->name << ", " << camera);
 		delete(camera);
 	}
 }
@@ -60,7 +65,8 @@ void CameraManager::RenderUI() {
 					std::vector<Camera*>::iterator position = std::find(m_cameras.begin(), m_cameras.end(), camera);
 					if (position != m_cameras.end()) {
 						m_cameras.erase(position);
-						DEBUGPRINT("Removed Camera from model poiter vector: " << camera);
+						Console::SendMessage("Deleted camera from UI", MESSAGE_TYPE::NOTIFICATION);
+						DEBUGPRINT("Deleted camera: " << camera);
 
 						m_currentCamera = m_cameras[0];
 						delete(camera);

@@ -11,6 +11,7 @@
 #include "../rendering/structs/MeshData.hpp"
 
 #include "../debug/Debug.hpp"
+#include "../debug/Console.hpp"
 
 class ResourceManager {
 public:
@@ -22,14 +23,13 @@ public:
 
 	static MeshData& LoadPly(std::string filePath);
 
-	static std::string LoadShader(std::string filePath);
+	static std::string& LoadShader(std::string filePath);
 
 	static unsigned char* LoadTexture(std::string, int* width, int* height);
 
 	static void FreeMemory();
 
 private:
-
 	static MeshData LoadModelFromPLYFile(std::string filePath);
 	static std::string LoadShaderFile(std::string file);
 	static unsigned char* LoadTextureFromFile(const char* path, int* width, int* height);

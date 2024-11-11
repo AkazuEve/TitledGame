@@ -8,6 +8,8 @@ Shader* ShaderManager::CreateShader(std::string name, std::string vertexFile, st
 	m_currentShader = shader;
 	m_shaders.push_back(shader);
 
+	DEBUGPRINT("ShaderManager:: Created shader:" << shader->name << ", " << shader);
+
 	return shader;
 }
 
@@ -17,6 +19,7 @@ void ShaderManager::SetupUI() {
 
 void ShaderManager::FreeMemory() {
 	for (Shader* shader : m_shaders) {
+		DEBUGPRINT("ShaderManager:: Deleted shader:" << shader->name << ", " << shader);
 		delete(shader);
 	}
 }
@@ -25,9 +28,6 @@ Shader* ShaderManager::GetCurrentShader() { return m_currentShader; }
 
 void ShaderManager::RenderUI() {
 	ImGui::Begin("Shaders");
-
-	// Cant forget this
-	//ImGui::Image(reinterpret_cast<ImTextureID>(m_curentBuffer), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 
 	for (Shader* shader : m_shaders) {
 		if (ImGui::TreeNode(shader->name.c_str())) {
@@ -46,7 +46,7 @@ void ShaderManager::RenderUI() {
 					if (position != m_shaders.end()) {
 						m_shaders.erase(position);
 						delete(shader);
-						DEBUGPRINT("Removed Shader from shader list: " << shader);
+						DEBUGPRINT("ImGuiUI:: Deleted shader: " << shader);
 						if (m_currentShader == shader)
 							m_currentShader = m_shaders[0];
 					}

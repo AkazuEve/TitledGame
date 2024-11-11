@@ -13,7 +13,7 @@ void ResourceManager::PreloadAllResources() {
 	std::string texturesFolder = "res/textures/";
 
 	for (const auto& entry : std::filesystem::directory_iterator(modelsFolder)) {
-		if (entry.file_size() > 60000) {
+		if (entry.file_size() < 60000) {
 			DEBUGPRINT("Preloading: " << entry.path() << " File size: " << entry.file_size());
 			LoadPly(entry.path().string());
 		}
@@ -38,11 +38,14 @@ MeshData& ResourceManager::LoadPly(std::string filePath) {
 	for (LoadedMeshData& loadedData : loadedMeshData) {
 		if (loadedData.path == filePath) {
 			DEBUGPRINT("Resource Manager:: Loaded ply data from vector");
+			Console::SendMessage("Resource Manager:: Loaded ply data from vector", MESSAGE_TYPE::SUCCESS);
 			return loadedData.meshData;
 		}
 	}
 
 	DEBUGPRINT("Resource Manager:: Loaded ply data from file");
+	Console::SendMessage("Resource Manager:: Loaded ply data from file", MESSAGE_TYPE::ERROR);
+
 
 	MeshData loadedData = LoadModelFromPLYFile(filePath);
 
@@ -60,6 +63,8 @@ MeshData& ResourceManager::LoadPly(std::string filePath) {
 		sizeof(Vertex));
 
 	DEBUGPRINT("Resource Manager:: Optimizing mesh, original vertex count: " << loadedData.vertices.size() << ", optimized count: " << optVertexCount);
+	Console::SendMessage("Resource Manager:: Optimizing mesh", MESSAGE_TYPE::NOTIFICATION);
+
 
 	MeshData optimizedData;
 
@@ -82,15 +87,19 @@ MeshData& ResourceManager::LoadPly(std::string filePath) {
 	return loadedMeshData[loadedMeshData.size() - 1].meshData;
 }
 
-std::string ResourceManager::LoadShader(std::string filePath) {
+std::string& ResourceManager::LoadShader(std::string filePath) {
 	for (LoadedShaderData& loadedData : loadedShaderData) {
 		if (loadedData.path == filePath) {
 			DEBUGPRINT("Resource Manager:: Loaded shader data from vector");
+			Console::SendMessage("Resource Manager:: Loaded shader data from vector", MESSAGE_TYPE::SUCCESS);
+
 			return loadedData.shader;
 		}
 	}
 
 	DEBUGPRINT("Resource Manager:: Loaded shader data from file");
+	Console::SendMessage("Resource Manager:: Loaded shader data from file", MESSAGE_TYPE::ERROR);
+
 	LoadedShaderData newLoadedData;
 	newLoadedData.path = filePath;
 	newLoadedData.shader = LoadShaderFile(filePath);
@@ -104,6 +113,8 @@ unsigned char* ResourceManager::LoadTexture(std::string filePath, int* width, in
 	for (LoadedTexture& loadedData : loadedTextureData) {
 		if (loadedData.path == filePath) {
 			DEBUGPRINT("Resource Manager:: Loaded texture data from vector");
+			Console::SendMessage("Resource Manager:: Loaded texture data from vector", MESSAGE_TYPE::SUCCESS);
+
 			*width = loadedData.width;
 			*height = loadedData.width;
 			return loadedData.data;
@@ -111,6 +122,8 @@ unsigned char* ResourceManager::LoadTexture(std::string filePath, int* width, in
 	}
 
 	DEBUGPRINT("Resource Manager:: Loaded texture data from file");
+	Console::SendMessage("Resource Manager:: Loaded texture data from file", MESSAGE_TYPE::ERROR);
+
 	LoadedTexture newLoadedData;
 	newLoadedData.path = filePath;
 	newLoadedData.data = LoadTextureFromFile(filePath.c_str(), width, height);
@@ -127,7 +140,6 @@ void ResourceManager::FreeMemory() {
 		stbi_image_free(loadedData.data);
 	}
 }
-
 
 MeshData ResourceManager::LoadModelFromPLYFile(std::string filePath) {
 	std::ifstream file{ filePath };

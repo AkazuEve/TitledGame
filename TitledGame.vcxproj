@@ -105,6 +105,7 @@
     <ClCompile Include="ext\source\imgui\imgui_tables.cpp" />
     <ClCompile Include="ext\source\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\modules\debug\Console.cpp" />
     <ClCompile Include="src\modules\debug\Debug.cpp" />
     <ClCompile Include="src\modules\rendering\managers\CameraManager.cpp" />
     <ClCompile Include="src\modules\rendering\managers\ModelManager.cpp" />
@@ -134,6 +135,7 @@
     <ClInclude Include="ext\source\imgui\imstb_textedit.h" />
     <ClInclude Include="ext\source\imgui\imstb_truetype.h" />
     <ClInclude Include="ext\source\stb\stbi.h" />
+    <ClInclude Include="src\modules\debug\Console.hpp" />
     <ClInclude Include="src\modules\debug\Debug.hpp" />
     <ClInclude Include="src\modules\rendering\managers\CameraManager.hpp" />
     <ClInclude Include="src\modules\rendering\managers\ModelManager.hpp" />
