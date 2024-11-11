@@ -25,9 +25,6 @@ namespace Rendering {
 	// Frees all memory and deletes all OpenGL objects
 	void Terminate();
 
-	ModelManager* GetModelManager();
-	CameraManager* GetCameraManager();
-
 	//Render all data stored in mesh classes.
 	//Requires an existing opengl rendering context.
 	void Render();

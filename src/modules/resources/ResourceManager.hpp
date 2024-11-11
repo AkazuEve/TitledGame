@@ -4,17 +4,21 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <filesystem>
+
+#include <MeshOptimizer/meshoptimizer.h>
 
 #include "../rendering/structs/MeshData.hpp"
 
 #include "../debug/Debug.hpp"
 
-unsigned char* LoadTextureFromFile(const char* path, int* width, int* height);
-
 class ResourceManager {
 public:
 	ResourceManager() = delete;
+	ResourceManager(const ResourceManager&) = delete;
 	~ResourceManager() = delete;
+
+	static void PreloadAllResources();
 
 	static MeshData& LoadPly(std::string filePath);
 
@@ -31,7 +35,7 @@ private:
 	static unsigned char* LoadTextureFromFile(const char* path, int* width, int* height);
 
 	struct LoadedMeshData {
-		MeshData data{};
+		MeshData meshData{};
 		std::string path{};
 	};
 

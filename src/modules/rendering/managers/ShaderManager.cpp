@@ -1,15 +1,7 @@
 #include "ShaderManager.hpp"
 
 Shader* ShaderManager::m_currentShader = nullptr;
-
-ShaderManager::ShaderManager() {
-}
-
-ShaderManager::~ShaderManager() {
-	for (Shader* shader : m_shaders) {
-		delete(shader);
-	}
-}
+std::vector<Shader*> ShaderManager::m_shaders{};
 
 Shader* ShaderManager::CreateShader(std::string name, std::string vertexFile, std::string fragmentFile) {
 	Shader* shader = new Shader(name, vertexFile, fragmentFile);
@@ -19,9 +11,19 @@ Shader* ShaderManager::CreateShader(std::string name, std::string vertexFile, st
 	return shader;
 }
 
+void ShaderManager::SetupUI() {
+	ImGuiUIManager::AddUIFunction(RenderUI);
+}
+
+void ShaderManager::FreeMemory() {
+	for (Shader* shader : m_shaders) {
+		delete(shader);
+	}
+}
+
 Shader* ShaderManager::GetCurrentShader() { return m_currentShader; }
 
-void ShaderManager::OnUIRender() {
+void ShaderManager::RenderUI() {
 	ImGui::Begin("Shaders");
 
 	// Cant forget this
@@ -44,7 +46,7 @@ void ShaderManager::OnUIRender() {
 					if (position != m_shaders.end()) {
 						m_shaders.erase(position);
 						delete(shader);
-						DEBUGPRINT("Removed Shader from shader list: " << this);
+						DEBUGPRINT("Removed Shader from shader list: " << shader);
 						if (m_currentShader == shader)
 							m_currentShader = m_shaders[0];
 					}

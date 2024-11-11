@@ -4,10 +4,11 @@
 
 std::vector<Model*> ModelManager::m_models{};
 
-ModelManager::ModelManager() {
+void ModelManager::SetupUI() {
+	ImGuiUIManager::AddUIFunction(RenderUI);
 }
 
-ModelManager::~ModelManager() {
+void ModelManager::FreeMemory() {
 	for (Model* model : m_models) {
 		delete(model);
 	}
@@ -54,7 +55,7 @@ Model* ModelManager::CreateModel(std::string modelPath, std::string texturePath)
 
 std::vector<Model*>& ModelManager::GetModelPointerVector() { return m_models; }
 
-void ModelManager::OnUIRender() {
+void ModelManager::RenderUI() {
 	ImGui::Begin("Model Manager");
 
 	static char name[20]{ "Test" };

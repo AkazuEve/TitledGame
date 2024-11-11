@@ -8,6 +8,6 @@
 #include "Vertex.hpp"
 
 struct MeshData {
-	std::vector<Vertex> vertices;
-	std::vector<GLuint> indices;
+	std::vector<Vertex> vertices{};
+	std::vector<GLuint> indices{};
 };

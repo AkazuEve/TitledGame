@@ -39,7 +39,8 @@ public:
 	float sensitivity{ 100.0f };
 	glm::vec3 orientation{ 0.0f, 0.0f, 1.0f };
 
-	bool firstClick{ true };
+	bool firstPress{ false };
+	bool lookingAround{ false };
 
 	std::string name{};
 

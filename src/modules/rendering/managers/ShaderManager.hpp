@@ -6,18 +6,22 @@
 
 #include "../objects/Shader.hpp"
 
-class ShaderManager : UIElement {
+class ShaderManager {
 public:
-	ShaderManager();
-	~ShaderManager();
+	ShaderManager() = delete;
+	ShaderManager(const ShaderManager&) = delete;
+	~ShaderManager() = delete;
 
-	Shader* CreateShader(std::string name, std::string vertexFile, std::string fragmentFile);
+	static void SetupUI();
+	static void FreeMemory();
+
+	static Shader* CreateShader(std::string name, std::string vertexFile, std::string fragmentFile);
 
 	static Shader* GetCurrentShader();
 
-	void OnUIRender() override;
+	static void RenderUI();
 
 private:
 	static Shader* m_currentShader;
-	std::vector<Shader*> m_shaders{};
+	static std::vector<Shader*> m_shaders;
 };

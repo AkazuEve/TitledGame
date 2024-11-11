@@ -62,11 +62,12 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;User32.lib;gdi32.lib;Shell32.lib</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;User32.lib;gdi32.lib;Shell32.lib;meshoptimizer.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
@@ -82,13 +83,14 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.hpp</PrecompiledHeaderFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;User32.lib;gdi32.lib;NamedLiblary.lib;Shell32.lib</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;User32.lib;gdi32.lib;Shell32.lib;meshoptimizer.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
@@ -114,6 +116,7 @@
     <ClCompile Include="src\modules\rendering\objects\Shader.cpp" />
     <ClCompile Include="src\modules\rendering\objects\Texture.cpp" />
     <ClCompile Include="src\modules\rendering\structs\Vertex.cpp" />
+    <ClCompile Include="src\modules\resources\MemoryManager.cpp" />
     <ClCompile Include="src\modules\resources\ResourceManager.cpp" />
     <ClCompile Include="src\modules\rendering\UI\ImGuiIU.cpp" />
     <ClCompile Include="src\modules\window\Window.cpp" />
@@ -143,6 +146,7 @@
     <ClInclude Include="src\modules\rendering\structs\MeshData.hpp" />
     <ClInclude Include="src\modules\rendering\objects\Texture.hpp" />
     <ClInclude Include="src\modules\rendering\structs\Vertex.hpp" />
+    <ClInclude Include="src\modules\resources\MemoryManager.hpp" />
     <ClInclude Include="src\modules\resources\ResourceManager.hpp" />
     <ClInclude Include="src\modules\rendering\UI\ImGuiUI.hpp" />
     <ClInclude Include="src\modules\window\Window.hpp" />

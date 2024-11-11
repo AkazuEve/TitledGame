@@ -7,17 +7,21 @@
 
 #include "../objects/Model.hpp"
 
-class ModelManager : UIElement {
+class ModelManager {
 public:
-	ModelManager();
-	~ModelManager();
+	ModelManager() = delete;
+	ModelManager(const ModelManager&) = delete;
+	~ModelManager() = delete;
 
-	Model* CreateModel(std::string name, std::string modelPath, std::string texturePath);
-	Model* CreateModel(std::string modelPath, std::string texturePath);
+	static void SetupUI();
+	static void FreeMemory();
+
+	static Model* CreateModel(std::string name, std::string modelPath, std::string texturePath);
+	static Model* CreateModel(std::string modelPath, std::string texturePath);
 
 	static std::vector<Model*>& GetModelPointerVector();
 
-	void OnUIRender() override;
+	static void RenderUI();
 
 private:
 	static std::vector<Model*> m_models;

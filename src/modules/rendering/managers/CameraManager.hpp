@@ -8,17 +8,21 @@
 
 #include "../objects/Camera.hpp"
 
-class CameraManager : UIElement {
+class CameraManager {
 public:
-	CameraManager();
-	~CameraManager();
+	CameraManager() = delete;
+	CameraManager(const CameraManager&) = delete;
+	~CameraManager() = delete;
 
-	void CreateCamera(std::string name);
+	static void CreateCamera(std::string name);
 
 	static Camera* GetCurrentCamera();
 
-	void OnUIRender() override;
+	static void SetupUI();
+	static void FreeMemory();
+
+	static void RenderUI();
 private:
 	static Camera* m_currentCamera;
-	std::vector<Camera*> m_cameras{};
+	static std::vector<Camera*> m_cameras;
 };

@@ -2,7 +2,7 @@
 
 #include "../managers/ShaderManager.hpp"
 
-extern unsigned int renderWidth, renderHeight;
+extern unsigned int viewportRenderWidth, viewportRenderHeight;
 
 Camera::Camera(std::string name): name(name) {
 	DEBUGPRINT("Created camera: " << this);
@@ -15,7 +15,12 @@ void Camera::SendDataToShader() {
 
 	// Calculate view and projection matrix
 	view = glm::lookAt(position, position + orientation, up);
-	projection = glm::perspective(glm::radians(fov), (float)(renderWidth / renderHeight), nearPlane, farPlane);
+
+	if(viewportRenderWidth && viewportRenderHeight)
+		projection = glm::perspective(glm::radians(fov), (float)(viewportRenderWidth / viewportRenderHeight), nearPlane, farPlane);
+	else
+		projection = glm::perspective(glm::radians(fov), 1.0f, nearPlane, farPlane);
+
 
 	static glm::mat4 result{ 0.0f };
 	result = projection * view;
@@ -60,21 +65,23 @@ void Camera::Inputs()
 		speed = 0.1f;
 	}
 
-	ImGuiIO& io = ImGui::GetIO();
-	if (io.WantCaptureMouse)
-		return;
+	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+		lookingAround = true;
+
+	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+		lookingAround = false;
 
 	// Handles mouse inputs
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+	if (lookingAround)
 	{
 		// Hides mouse cursor
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		// Prevents camera from jumping on the first click
-		if (firstClick)
+		if (firstPress)
 		{
-			glfwSetCursorPos(window, (renderWidth / 2), (renderHeight / 2));
-			firstClick = false;
+			glfwSetCursorPos(window, (viewportRenderWidth / 2), (viewportRenderHeight / 2));
+			firstPress = false;
 		}
 
 		// Stores the coordinates of the cursor
@@ -85,8 +92,8 @@ void Camera::Inputs()
 
 		// Normalizes and shifts the coordinates of the cursor such that they begin in the middle of the screen
 		// and then "transforms" them into degrees 
-		float rotX = sensitivity * (float)(mouseY - (renderHeight / 2)) / renderHeight;
-		float rotY = sensitivity * (float)(mouseX - (renderWidth / 2)) / renderWidth;
+		float rotX = sensitivity * (float)(mouseY - (viewportRenderHeight / 2)) / viewportRenderHeight;
+		float rotY = sensitivity * (float)(mouseX - (viewportRenderWidth / 2)) / viewportRenderWidth;
 
 		// Calculates upcoming vertical change in the Orientation
 		glm::vec3 newOrientation = glm::rotate(orientation, glm::radians(-rotX), glm::normalize(glm::cross(orientation, up)));
@@ -101,13 +108,13 @@ void Camera::Inputs()
 		orientation = glm::rotate(orientation, glm::radians(-rotY), up);
 
 		// Sets mouse cursor to the middle of the screen so that it doesn't end up roaming around
-		glfwSetCursorPos(window, (renderWidth / 2), (renderHeight / 2));
+		glfwSetCursorPos(window, (viewportRenderWidth / 2), (viewportRenderHeight / 2));
 	}
-	else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
+	else if (!lookingAround)
 	{
 		// Unhides cursor since camera is not looking around anymore
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		// Makes sure the next time the camera looks around it doesn't jump
-		firstClick = true;
+		firstPress = true;
 	}
 }

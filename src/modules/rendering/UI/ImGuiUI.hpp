@@ -12,26 +12,19 @@
 #include <string>
 #include <format>
 
-class UIElement {
+class ImGuiUIManager {
 public:
-	UIElement();
-	~UIElement();
+	ImGuiUIManager() = delete;
+	~ImGuiUIManager() = delete;
 
-	virtual void OnUIRender() = 0;
+	static void InitUI(const char* version);
+	static void FreeMemory();
 
-	static std::vector<UIElement*>& GetElementVector() { return elements; };
+	static void AddUIFunction(void(*func)());
 
+	static void Render();
+
+	static std::vector<void(*)()> uiFunctions;
 private:
-	static std::vector<UIElement*> elements;
+
 };
-
-namespace UI {
-	// Creates ImGui context and sets up for OpenGL3 and GLFW
-	void ImGuiInit(const char* version);
-
-	// Frees all the memory and shuts down
-	void ImGuiTerminate();
-
-	// Renders the debug GUI
-	void RenderUI();
-}

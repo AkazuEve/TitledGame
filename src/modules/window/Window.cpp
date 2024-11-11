@@ -3,48 +3,43 @@
 void glfwSetWindowCenter(GLFWwindow* window);
 void RenderedWindowResizeCallback(GLFWwindow* window, int width, int height);
 
-std::vector<WindowHint> mainWindowHints = {
-	{GLFW_DECORATED, GLFW_FALSE},
-	{GLFW_CONTEXT_VERSION_MAJOR, 4},
-	{GLFW_CONTEXT_VERSION_MINOR, 6},
-	{GLFW_RESIZABLE, GLFW_TRUE},
-	{GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE},
-	#ifdef _DEBUG
-		{GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE}
-	#endif
-};
-
 bool Window::GLFWInitialized = false;
 unsigned short Window::WindowInstanceCount = 0;
 
 extern unsigned int renderWidth, renderHeight;
 
 Window::Window(int width, int height, const char* title) {
-	// Check if GLFW did not fail to initialize
-	if (!GLFWInitialized) glfwInit();
-	DEBUGPRINT("GLFW initialized");
+    // Check if GLFW did not fail to initialize
+    if (!GLFWInitialized) glfwInit();
+    DEBUGPRINT("GLFW initialized");
 
-	//Set all window hints
-	for (WindowHint hint : mainWindowHints) {
-		glfwWindowHint(hint.hint, hint.value);
-	}
+    //Set all window hints
+    glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	// Create window and check if it worked and increment instance count
-	m_windowPtr = glfwCreateWindow(width, height, title, nullptr, nullptr);
-	if (m_windowPtr) {
-		WindowInstanceCount++;
+    #ifdef _DEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+    #endif
 
-		glfwMakeContextCurrent(m_windowPtr);
+        // Create window and check if it worked and increment instance count
+        m_windowPtr = glfwCreateWindow(width, height, title, nullptr, nullptr);
+    if (m_windowPtr) {
+        WindowInstanceCount++;
 
-		glfwSetWindowCenter(m_windowPtr);
+        glfwMakeContextCurrent(m_windowPtr);
+
+        glfwSetWindowCenter(m_windowPtr);
 
         glfwSwapInterval(1);
 
-		// Setup resize callback so were always up to date with render resolution
-		glfwSetWindowSizeCallback(glfwGetCurrentContext(), RenderedWindowResizeCallback);
+        // Setup resize callback so were always up to date with render resolution
+        glfwSetWindowSizeCallback(glfwGetCurrentContext(), RenderedWindowResizeCallback);
 
-		DEBUGPRINT("Window created: " << WindowInstanceCount);
-	}
+        DEBUGPRINT("Window created: " << WindowInstanceCount);
+    }
 }
 
 Window::~Window() {
@@ -66,8 +61,6 @@ bool Window::ShouldRun() {
 	glfwPollEvents();
 	return !glfwWindowShouldClose(m_windowPtr);
 }
-
-
 
 // Thank you github issues
 // https://github.com/glfw/glfw/issues/310
@@ -141,5 +134,5 @@ void RenderedWindowResizeCallback(GLFWwindow* window, int width, int height) {
     renderWidth = width;
     renderHeight = height;
 
-    DEBUGPRINT("New window size width: " << renderWidth << " height: " << renderHeight);
+    //DEBUGPRINT("New window size width: " << renderWidth << " height: " << renderHeight);
 }

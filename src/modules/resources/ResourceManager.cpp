@@ -7,22 +7,79 @@ std::vector<ResourceManager::LoadedMeshData> ResourceManager::loadedMeshData;
 std::vector<ResourceManager::LoadedShaderData> ResourceManager::loadedShaderData;
 std::vector<ResourceManager::LoadedTexture> ResourceManager::loadedTextureData;
 
+void ResourceManager::PreloadAllResources() {
+	std::string modelsFolder = "res/models/";
+	std::string shadersFolder = "res/shaders/";
+	std::string texturesFolder = "res/textures/";
+
+	for (const auto& entry : std::filesystem::directory_iterator(modelsFolder)) {
+		if (entry.file_size() > 60000) {
+			DEBUGPRINT("Preloading: " << entry.path() << " File size: " << entry.file_size());
+			LoadPly(entry.path().string());
+		}
+		else {
+			DEBUGPRINT("File too big to preload: " << entry.path() << " File size: " << entry.file_size());
+		}
+	}
+	
+	for (const auto& entry : std::filesystem::directory_iterator(shadersFolder)){
+		DEBUGPRINT("Preloading: " << entry.path());
+		LoadShader(entry.path().string());
+	}
+
+	for (const auto& entry : std::filesystem::directory_iterator(texturesFolder)) {
+		int x, y;
+		DEBUGPRINT("Preloading: " << entry.path());
+		LoadTexture(entry.path().string(), &x, &y);
+	}
+}
+
 MeshData& ResourceManager::LoadPly(std::string filePath) {
 	for (LoadedMeshData& loadedData : loadedMeshData) {
 		if (loadedData.path == filePath) {
 			DEBUGPRINT("Resource Manager:: Loaded ply data from vector");
-			return loadedData.data;
+			return loadedData.meshData;
 		}
 	}
 
 	DEBUGPRINT("Resource Manager:: Loaded ply data from file");
-	LoadedMeshData newLoadedData;
-	newLoadedData.path = filePath;
-	newLoadedData.data = LoadModelFromPLYFile(filePath);
 
-	loadedMeshData.push_back(newLoadedData);
+	MeshData loadedData = LoadModelFromPLYFile(filePath);
 
-	return loadedMeshData[loadedMeshData.size() - 1].data;
+	size_t numVertices = loadedData.vertices.size();
+	size_t numIndices = loadedData.indices.size();
+
+	std::vector<unsigned int> remap(numIndices);
+
+	size_t optVertexCount = meshopt_generateVertexRemap(
+		remap.data(),
+		loadedData.indices.data(),
+		numIndices,
+		loadedData.vertices.data(),
+		numVertices,
+		sizeof(Vertex));
+
+	DEBUGPRINT("Resource Manager:: Optimizing mesh, original vertex count: " << loadedData.vertices.size() << ", optimized count: " << optVertexCount);
+
+	MeshData optimizedData;
+
+	optimizedData.indices.resize(numIndices);
+	optimizedData.vertices.resize(optVertexCount);
+
+	meshopt_remapIndexBuffer(   optimizedData.indices.data(),  loadedData.indices.data(),    numIndices,  remap.data());
+	meshopt_remapVertexBuffer(  optimizedData.vertices.data(), loadedData.vertices.data(),   numVertices, sizeof(Vertex), remap.data());
+	meshopt_optimizeVertexCache(optimizedData.indices.data(),  optimizedData.indices.data(), numIndices,  optVertexCount);
+	meshopt_optimizeOverdraw(   optimizedData.indices.data(),  optimizedData.indices.data(), numIndices,  &(optimizedData.vertices[0].pos.x), optVertexCount, sizeof(Vertex), 1.05f);
+	meshopt_optimizeVertexFetch(optimizedData.vertices.data(), optimizedData.indices.data(), numIndices,  optimizedData.vertices.data(),      optVertexCount, sizeof(Vertex));
+
+	LoadedMeshData data;
+	data.meshData = optimizedData;
+	data.path = filePath;
+
+
+	loadedMeshData.push_back(data);
+
+	return loadedMeshData[loadedMeshData.size() - 1].meshData;
 }
 
 std::string ResourceManager::LoadShader(std::string filePath) {

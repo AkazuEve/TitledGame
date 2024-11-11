@@ -5,30 +5,11 @@
 #include "modules/rendering/Rendering.hpp"
 #include "modules/window/Window.hpp"
 
+#include "modules/resources/MemoryManager.hpp"
+
 #include <crtdbg.h>
 
-#ifdef _DEBUG
-	size_t allocatedMemory{ 0 };
-
-	void* operator new (size_t size) {
-		{
-			allocatedMemory += size;
-			std::cout << " Allocation: " << size << " Usage: " << allocatedMemory << "\n";
-
-			void* p = malloc(size);
-			if (p)
-				return p;
-			throw std::runtime_error("Failed to allocate");
-		}
-	}
-
-	inline void operator delete(void* memory, size_t size) {
-		allocatedMemory -= size;
-		std::cout << "Deallocation: " << size << " Usage: " << allocatedMemory << "\n";
-
-		free(memory);
-	}
-#endif
+#include <thread>
 
 float getRandomFloat(int max) {
 	int random = rand() % max + 1;
@@ -39,10 +20,15 @@ float getRandomFloat(int max) {
 
 int main() {
 	#ifdef _DEBUG
-		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_EVERY_1024_DF);
 	#endif
 
-	Window mainWindow(1440, 810, "Game Window"); 
+	Window mainWindow(1440, 810, "Game Window");
+
+	MemoryManager::SetupUI();
+
+	ResourceManager::PreloadAllResources();
+
 	Rendering::Init();
 
 	while (mainWindow.ShouldRun()) {
@@ -51,6 +37,6 @@ int main() {
 
 	Rendering::Terminate();
 	ResourceManager::FreeMemory();
-
+	
 	return 0;
 }
